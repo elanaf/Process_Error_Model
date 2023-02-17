@@ -1,4 +1,4 @@
-
+####the one that works####
 ####################################################
 #Graph the species to determine that they are following logistic growth
 ####################################################
@@ -62,53 +62,6 @@ native.mat <- cbind(first, second, third, fourth, fifth, sixth, seventh, eighth)
 #State Prediction Funcions: 
 #Model with single and multi r and process vs observation error
 ###############################################################
-#Single obs error
-single.func<-function(r,obs, n0){
-  dims <- dim(obs)
-  ntubs <- dims[1]
-  ts <- dims[2]
-  
-  Nout <- matrix(0, nrow = ntubs, ncol = ts)
-  Nout[,1]<-n0*(1+r*(1-n0/.995))
-  for(i in 2:ts){
-    for(j in 1:ntubs){
-      Nout[j, i]<-Nout[j, i-1]*(1+r*(1-Nout[j, i-1]/.995))
-    }
-  } 
-  return(Nout)
-}
-
-#test
-single.func(.5, native.mat, n0 = .1)
-
-#Multi obs error
-multi.func<-function(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, obs, species.vec, n0){
-  rvec <- c(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10)
-  
-  dims <- dim(obs)
-  ntubs <- dims[1]
-  ts <- dims[2]
-  
-  Nout <- matrix(0, nrow = ntubs, ncol = ts)
-  for(i in 1:ntubs){
-    Nout[i,1] <- n0 * (1 + (rvec[species.vec[i]] * (1 - (n0/.995))))
-  }
-  
-  
-  for(i in 2:ts){
-    for(j in 1:ntubs){
-      Nout[j, i]<-Nout[j, i-1]*(1+rvec[species.vec[j]]*(1-Nout[j, i-1]/.995))
-    }
-  }
-  
-  return(Nout)
-  
-}
-
-#test
-multi.func(r1 = .5, r2 = .6, r3 = .4, r4 = .6, r5 = .6, 
-           r6 = .5, r7 = .5, r8 = .5, r9 = .5, r10 = .5,
-           obs = native.mat, species.vec = species.vec, n0 = 0.0001)
 
 #predict the mean (expected value) of every timestep when you don't have an observation- see below
 #Multi process error
@@ -145,81 +98,6 @@ multi.func.p(r1 = .7, r2 = .9, r3 = .9, r4 = .7, r5 = .9, r6 = .2, r7 = .7, r8 =
 ############################
 #NLL Function
 ############################
-#Single obs error
-nll.single.func<-function(lr,obs,lsd, ln0){ #logitK so between 0 and 1
-  r<-exp(lr)
-  sd <- exp(lsd)
-  n0 <- exp(ln0)
-  
-  predN<-single.func(r=r,obs=obs, n0 = n0)
-  
-  obs2 <- obs[!is.na(obs)]
-  predN2 <- predN[!is.na(obs)]
-  
-  param <- dampack::beta_params(mean = predN2, sigma = sd)
-  alpha <- param[1]
-  alpha <- unlist(alpha)
-  beta <- param[2]
-  beta <- unlist(beta)
-  
-  likes <- dbeta(x=obs2,shape1 = alpha, shape2 = beta)
-  
-  # likes <- dnorm(x=qlogis(obs2), mean=plogis(predN2), sd = sd)
-  
-  nll<--1*sum(log(likes)) 
-  return(nll)
-}
-
-#test
-nll.single.func(lr = log(0.4), obs = native.mat, lsd = log(0.05), ln0 = log(0.001))
-
-#could try boundingfrom the fourth lecture
-#could use plogis or qlogis to find the logit of all my cover data and then run that with a normal distribution
-#dnorm of logit(obs)
-
-#Multi obs error
-nll.multi.func<-function(lr1, lr2, lr3, lr4, lr5, lr6, lr7, lr8, lr9, lr10, 
-                         obs, ln0, lsd, species.vec){
-  r1<-exp(lr1)
-  r2<-exp(lr2)
-  r3<-exp(lr3)
-  r4<-exp(lr4)
-  r5 <- exp(lr5)
-  r6 <- exp(lr6)
-  r7 <- exp(lr7)
-  r8 <- exp(lr8)
-  r9 <- exp(lr9)
-  r10 <- exp(lr10)
-  
-  sd<-exp(lsd)
-  n0 <- exp(ln0)
-  
-  predN<-multi.func(r1=r1,r2=r2,r3=r3,r4=r4,r5=r5,r6=r6, r7=r7,r8=r8, r9=r9, r10=r10,
-                    obs=obs,species.vec = species.vec, n0 = n0)
-  
-  obs2 <- obs[!is.na(obs)]
-  predN2 <- predN[!is.na(obs)]
-  
-  param <- dampack::beta_params(mean = predN2, sigma = sd)
-  alpha <- param[1]
-  alpha <- unlist(alpha)
-  beta <- param[2]
-  beta <- unlist(beta)
-  
-  likes <- dbeta(x=obs2,shape1 = alpha, shape2 = beta)
-  # likes <- dnorm(x=qlogis(obs2), mean=plogis(predN2), sd = sd)
-  
-  nll<--1*sum(log(likes)) 
-  return(nll)
-}
-
-#test
-nll.multi.func(lr1 = log(.5), lr2 = log(.5), lr3 = log(.4), lr4 = log(.6),
-               lr5 = log(.4), lr6 = log(.4), lr7 = log(.7), lr8 = log(.3), 
-               lr9 = log(.4), lr10 = log(.4),
-               lsd = log(.05), ln0 = log(0.0001),
-               obs = native.mat, species.vec = species.vec)
-
 
 #Multi process error - for the process error model, I just need to predict a number based on the previous timstep
 #I would calculate the timestep between recorded values similar to how we did with the spatial models
@@ -297,21 +175,6 @@ nll.multi.func.p(lr1 = log(.4), lr2 = log(.4),lr3 = log(.4),
 
 library(bbmle)
 
-#Single obs error
-# Create list of starting guesses for the single model
-start.list<-list(lr=log(.1),
-                 lsd = log(0.05),
-                 ln0 = log(0.001))
-# Create list of observed data for model
-data.list<-list(obs=native.mat)
-
-# Find MLE parameter estimates
-fit_s<-mle2(minuslogl=nll.single.func,start=start.list,data=data.list)
-# store MLE parameter estimates
-cfs_s<-exp(coef(fit_s)) 
-cfs_s
-
-#Multi obs error
 # Create list of starting guesses for the multi model
 start.list<-list(lr1=log(.1),
                  lr2 = log(.2),
@@ -328,13 +191,6 @@ start.list<-list(lr1=log(.1),
 # Create list of observed data for model
 data.list<-list(obs=native.mat, species.vec = species.vec, method = "SANN")
 
-# Find MLE parameter estimates
-fit_m<-mle2(minuslogl=nll.multi.func,start=start.list,data=data.list)
-# store MLE parameter estimates
-cfs_m<-exp(coef(fit_m)) 
-cfs_m
-
-# #Multi process error
 # # Find MLE parameter estimates
 fit_mp<-mle2(minuslogl=nll.multi.func.p,start=start.list,data=data.list, method = "SANN")
 # # store MLE parameter estimates
@@ -345,66 +201,1619 @@ cfs_mp
 # Predict historical dynamics from MLE parameter estimates
 ##############################################################
 
-pred_s<-single.func(r=cfs_s[1],obs=native.mat, n0 = cfs_s[3])
-pred_m <- multi.func(r1 = cfs_m[1], r2 = cfs_m[2], r3 = cfs_m[3], r4 = cfs_m[4],r5 = cfs_m[5], 
-                     r6 = cfs_m[6], r7 = cfs_m[7], r8 = cfs_m[8], r9 = cfs_m[9], r10 = cfs_m[10],
-                     obs = native.mat, species.vec = species.vec, n0 = cfs_m[11])
 pred_mp<-multi.func.p(r1 = cfs_mp[1], r2 = cfs_mp[2], r3 = cfs_mp[3],
                       r4 = cfs_mp[4], r5 = cfs_mp[5], r6 = cfs_mp[6],
                       r7 = cfs_mp[7], r8 = cfs_mp[8], r9 = cfs_mp[9],
                       r10 = cfs_mp[10], n0 = cfs_mp[11], obs = native.mat, species.vec = species.vec)
-
-########################################################
-# Plot to compare
-########################################################
-
-par(mfrow = c(1,3), mar = c(4, 4, 2, 2))
-
-plot(native.mat, pred_s, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
-abline(0, 1) # Add 1:1 line on figure indicating perfect fit
-summary(lm(as.vector(native.mat) ~ as.vector(pred_s))) 
-mtext("R2 = 0.3", side=3)
-
-plot(native.mat, pred_m, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
-abline(0, 1) # Add 1:1 line on figure indicating perfect fit
-summary(lm(as.vector(native.mat) ~ as.vector(pred_m))) 
-mtext("R2 = 0.87", side=3)
-
-
 plot(native.mat, pred_mp, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
 abline(0, 1) # Add 1:1 line on figure indicating perfect fit
 summary(lm(as.vector(native.mat) ~ as.vector(pred_mp)))
-mtext("R2 = 0.88", side=3)
+#mtext("R2 = 0.88", side=3)
 
-#################################
-#Compare the two models using AIC
-#################################
-# Calculate AIC for each model
-AICs<--2*logLik(fit_s)+2*length(cfs_s)
-AICm<--2*logLik(fit_m)+2*length(cfs_m)
-AICmp<--2*logLik(fit_mp)+2*length(cfs_mp)
 
-# Calculate delta AIC for each model
-dAICs<-AICs-min(AICs,AICm, AICmp)
-dAICm<-AICm-min(AICs,AICm, AICmp)
-dAICmp<-AICm-min(AICs,AICm, AICmp)
 
-# Calculate relative likelihood for each model
-rAICs<-exp(-.5*dAICs)
-rAICm<-exp(-.5*dAICm)
-rAICmp<-exp(-.5*dAICmp)
+####we added BICE####
+####################################################
+#Graph the species to determine that they are following logistic growth
+####################################################
+load("main_dfs.RData")
 
-# Calculate AIC weights for each model
-AICws<-rAICs/sum(rAICs,rAICm,rAICmp)
-AICwm<-rAICm/sum(rAICm,rAICs,rAICmp)
-AICwmp<-rAICmp/sum(rAICm,rAICs,rAICmp)
+library(ggplot2)
+library(magrittr)
+library(dplyr)
+library(gtools)
 
-#plot the AIC weight
-par(mar = c(4, 4, 2, 2))
+####################################################
+# Make a new dataframe that is in a better format
+####################################################
+#only select columns that I need for the analysis
+native.dat <- greenhouse %>%
+  filter(Species == "BICE" | Species == "HENU" | Species == "RUMA" | Species == "EPCI" | 
+           Species == "EUMA" | Species == "SYCI" | Species == "SOCA" |
+           Species == "MUAS" | Species == "PUNU" | Species == "DISP" | Species == "EUOC") %>%
+  filter(Density == "L" & Phrag_Presence == "W")%>%
+  select(Species, Block, Density, Phrag_Presence, Date_Cleaned, Cover.Native)  %>%
+  arrange(Species) #put same species next to each other
 
-allAIC<-c(AICws,AICwm,AICwmp)
-allAICw<-allAIC[order(allAIC)]
-plot(allAICw,xaxt="n",ylab="AIC weight",
-     xlab="Model",pch=16,las=1)
-axis(side=1,at=seq(1,3),labels=c("Single", "Multi", "MultiP")[order(allAIC)])
+#save this for graphing later
+native.dat2 <- greenhouse %>%
+  filter(Species == "BICE"| Species == "HENU" | Species == "RUMA" | Species == "EPCI" | 
+           Species == "EUMA" | Species == "SYCI" | Species == "SOCA" |
+           Species == "MUAS" | Species == "PUNU" | Species == "DISP"| Species == "EUOC") %>%
+  filter(Density == "L" & Phrag_Presence == "W")%>%
+  select(Species, Block, Density, Phrag_Presence, Date_Cleaned, Cover.Native)  %>%
+  arrange(Species) #put same species next to each other
 
+native.dat$ID_Col <- with(native.dat, paste0(Species, Block))
+
+#make vectors to keep track of the species
+#each species gets a number 1 - 13, so I repeat those numbers 3times for the 3 blocks
+species.vec <- rep(1:11, each = 3)
+
+#rearrange so date is column
+native.dat <- reshape2::dcast(native.dat, ID_Col ~ Date_Cleaned, value.var = "Cover.Native")
+
+#now make a matrix
+native.mat <- as.matrix(native.dat[,-1]) #make it a matrix, without the ID_Col
+native.mat[is.na(native.mat)] <- 0 #make all NAs 0
+
+native.mat[native.mat == 0] <- 0.025 #get rid of 0s
+
+#add the extra days so that it becomes a daily timestep
+first <- matrix(NA, nrow = 33, ncol=17)
+second <- matrix(native.mat[,1])
+third <- matrix(NA, nrow = 33, ncol = 6)
+fourth <- matrix(native.mat[,2])
+fifth <- matrix(NA, nrow = 33, ncol = 6)
+sixth <- matrix(native.mat[,3])
+seventh <- matrix(NA, nrow = 33, ncol = 6)
+eighth <- matrix(native.mat[,4])
+
+native.mat <- cbind(first, second, third, fourth, fifth, sixth, seventh, eighth)
+
+###############################################################
+#State Prediction Funcions: 
+#Model with single and multi r and process vs observation error
+###############################################################
+
+#predict the mean (expected value) of every timestep when you don't have an observation- see below
+#Multi process error
+multi.func.p<-function(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, obs,n0, species.vec){
+  rvec <- c(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11)
+  
+  dims <- dim(obs)
+  ntubs <- dims[1]
+  ts <- dims[2]
+  
+  Nout <- matrix(0, nrow = ntubs, ncol = ts)
+  for(i in 1:ntubs){
+    Nout[i,1]<-n0*(1+rvec[species.vec[i]]*(1-n0/.995))
+  }
+  
+  for(i in 2:ts){
+    for(j in 1:ntubs){
+      if(!is.na(obs[j, i-1])) {
+        Nout[j, i]<-obs[j, i-1]*(1+rvec[species.vec[j]]*(1-obs[j, i-1]/.995))
+      }
+      if(is.na(obs[j, i-1])){ #if it is an NA, do off the last predicted
+        Nout[j, i] <- Nout[j, i-1]*(1+rvec[species.vec[j]]*(1-Nout[j, i-1]/.995))
+      }
+    }
+  }
+  return(Nout)
+}
+
+#test
+multi.func.p(r1 = .7, r2 = .9, r3 = .9, r4 = .7, r5 = .9, r6 = .2, r7 = .7, r8 = .6,
+             r9 = .9, r10 = .1, r11 = .1, species.vec = species.vec,
+             obs = native.mat, n0 = .1)
+
+############################
+#NLL Function
+############################
+
+#Multi process error - for the process error model, I just need to predict a number based on the previous timstep
+#I would calculate the timestep between recorded values similar to how we did with the spatial models
+#then the mean is your last observed value
+#variance is the variance of the last timestepx the number of time steps because the variance increases linearly with the number of timesteps out 
+#tbefore putting it into dnorm, you calculate the sd from the variance (sqrt(timesteps x variance))
+#qlogis of the predicted N 
+nll.multi.func.p<-function(lr1, lr2, lr3, lr4, lr5, lr6, lr7, lr8, lr9,
+                           lr10, lr11, species.vec,
+                           obs,ln0, lsd){
+  r1<-exp(lr1)
+  r2<-exp(lr2)
+  r3<-exp(lr3)
+  r4<-exp(lr4)
+  r5 <- exp(lr5)
+  r6 <- exp(lr6)
+  r7 <- exp(lr7)
+  r8 <- exp(lr8)
+  r9 <- exp(lr9)
+  r10 <- exp(lr10)
+  r11 <- exp(lr11)
+  
+  s <-exp(lsd)
+  n0 <- exp(ln0)
+  
+  predN<-multi.func.p(r1=r1,r2=r2,r3=r3,r4=r4,r5=r5,r6=r6, r7=r7,r8=r8, r9=r9, r10=r10,r11=r11,
+                      obs=obs,species.vec = species.vec, n0 = n0)
+  
+  # obs2 <- obs[!is.na(obs)]
+  # predN2 <- predN[!is.na(obs)]
+  
+  # param <- dampack::beta_params(mean = predN2, sigma = sd)
+  # alpha <- param[1]
+  # alpha <- unlist(alpha)
+  # beta <- param[2]
+  # beta <- unlist(beta)
+  
+  predN[predN==0]<-.01
+  predN[predN==1]<-.99
+  # print(obs)
+  # print(predN)
+  liks<-0
+  
+  for(j in 1:nrow(obs)){
+    lastobs <- 0
+    for(i in 1:ncol(obs)){
+      if(!is.na(obs[j, i])){
+        tbtwn<-i-lastobs
+        # print(tbtwn)
+        liks<-c(liks, dnorm(x=qlogis(obs[j, i]),mean=qlogis(predN[j, i]),sd=sqrt(tbtwn*s^2)))
+        lastobs<-i
+        # print(liks)
+      }
+    }
+  }
+  
+  
+  
+  # likes <- dbeta(x=obs2,shape1 = alpha, shape2 = beta)
+  # likes <- dnorm(x=qlogis(obs2), mean=plogis(predN2), sd = sd)
+  
+  nll<--1*sum(log(liks[-1]))  
+  return(nll)
+}
+
+#test
+nll.multi.func.p(lr1 = log(.4), lr2 = log(.4),lr3 = log(.4),
+                 lr4 = log(.4),lr5 = log(.4),lr6 = log(.4),
+                 lr7 = log(.4),lr8 = log(.4),lr9 = log(.4), lr10 = log(.4), lr11 = log(.4),
+                 ln0 = log(.01), obs = native.mat, lsd = log(.05), species.vec = species.vec)
+
+
+#####################
+#Find MLE parameters
+#####################
+
+library(bbmle)
+
+# Create list of starting guesses for the multi model
+start.list<-list(lr1=log(.1),
+                 lr2 = log(.2),
+                 lr3 = log(.1),
+                 lr4 = log(.1),
+                 lr5=log(.2),
+                 lr6 = log(.1),
+                 lr7 = log(.1),
+                 lr8 = log(.1),
+                 lr9 = log(.1),
+                 lr10 = log(.1),
+                 lr11 = log(.1),
+                 lsd = log(.05),
+                 ln0 = log(0.001))
+# Create list of observed data for model
+data.list<-list(obs=native.mat, species.vec = species.vec, method = "SANN")
+
+# # Find MLE parameter estimates
+fit_mp<-mle2(minuslogl=nll.multi.func.p,start=start.list,data=data.list, method = "SANN")
+# # store MLE parameter estimates
+cfs_mp<-exp(coef(fit_mp)) 
+cfs_mp
+
+##############################################################
+# Predict historical dynamics from MLE parameter estimates
+##############################################################
+
+pred_mp<-multi.func.p(r1 = cfs_mp[1], r2 = cfs_mp[2], r3 = cfs_mp[3],
+                      r4 = cfs_mp[4], r5 = cfs_mp[5], r6 = cfs_mp[6],
+                      r7 = cfs_mp[7], r8 = cfs_mp[8], r9 = cfs_mp[9],
+                      r10 = cfs_mp[10], r11 = cfs_mp[11],
+                      n0 = cfs_mp[12], obs = native.mat, species.vec = species.vec)
+plot(native.mat, pred_mp, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
+abline(0, 1) # Add 1:1 line on figure indicating perfect fit
+summary(lm(as.vector(native.mat) ~ as.vector(pred_mp)))
+#mtext("R2 = 0.88", side=3)
+
+####now with all the species####
+####################################################
+#Graph the species to determine that they are following logistic growth
+####################################################
+load("main_dfs.RData")
+
+library(ggplot2)
+library(magrittr)
+library(dplyr)
+library(gtools)
+
+####################################################
+# Make a new dataframe that is in a better format
+####################################################
+#only select columns that I need for the analysis
+native.dat <- greenhouse %>%
+  filter(Species != "PHAU") %>%
+  filter(Density == "L" & Phrag_Presence == "W")%>%
+  select(Species, Block, Density, Phrag_Presence, Date_Cleaned, Cover.Native)  %>%
+  arrange(Species) #put same species next to each other
+
+#save this for graphing later
+native.dat2 <- greenhouse %>%
+  filter(Species != "PHAU") %>%
+  filter(Density == "L" & Phrag_Presence == "W")%>%
+  select(Species, Block, Density, Phrag_Presence, Date_Cleaned, Cover.Native)  %>%
+  arrange(Species)
+
+native.dat$ID_Col <- with(native.dat, paste0(Species, Block))
+
+#make vectors to keep track of the species
+#each species gets a number 1 - 13, so I repeat those numbers 3times for the 3 blocks
+species.vec <- rep(1:18, each = 3)
+
+#rearrange so date is column
+native.dat <- reshape2::dcast(native.dat, ID_Col ~ Date_Cleaned, value.var = "Cover.Native")
+
+#now make a matrix
+native.mat <- as.matrix(native.dat[,-1]) #make it a matrix, without the ID_Col
+native.mat[is.na(native.mat)] <- 0 #make all NAs 0
+
+native.mat[native.mat == 0] <- 0.025 #get rid of 0s
+
+#add the extra days so that it becomes a daily timestep
+first <- matrix(NA, nrow = 54, ncol=17)
+second <- matrix(native.mat[,1])
+third <- matrix(NA, nrow = 54, ncol = 6)
+fourth <- matrix(native.mat[,2])
+fifth <- matrix(NA, nrow = 54, ncol = 6)
+sixth <- matrix(native.mat[,3])
+seventh <- matrix(NA, nrow = 54, ncol = 6)
+eighth <- matrix(native.mat[,4])
+
+native.mat <- cbind(first, second, third, fourth, fifth, sixth, seventh, eighth)
+
+###############################################################
+#State Prediction Funcions: 
+#Model with single and multi r and process vs observation error
+###############################################################
+
+#predict the mean (expected value) of every timestep when you don't have an observation- see below
+#Multi process error
+multi.func.p<-function(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, 
+                       r12, r13, r14, r15, r16, r17, r18,
+                       obs,n0, species.vec){
+  rvec <- c(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17, r18)
+  
+  dims <- dim(obs)
+  ntubs <- dims[1]
+  ts <- dims[2]
+  
+  Nout <- matrix(0, nrow = ntubs, ncol = ts)
+  for(i in 1:ntubs){
+    Nout[i,1]<-n0*(1+rvec[species.vec[i]]*(1-n0/.995))
+  }
+  
+  for(i in 2:ts){
+    for(j in 1:ntubs){
+      if(!is.na(obs[j, i-1])) {
+        Nout[j, i]<-obs[j, i-1]*(1+rvec[species.vec[j]]*(1-obs[j, i-1]/.995))
+      }
+      if(is.na(obs[j, i-1])){ #if it is an NA, do off the last predicted
+        Nout[j, i] <- Nout[j, i-1]*(1+rvec[species.vec[j]]*(1-Nout[j, i-1]/.995))
+      }
+    }
+  }
+  return(Nout)
+}
+
+#test
+multi.func.p(r1 = .7, r2 = .9, r3 = .9, r4 = .7, r5 = .9, r6 = .2, r7 = .7, r8 = .6,
+             r9 = .9, r10 = .1, r11 = .1, 
+             r12 = .1, r13 = .1, r14 = .1, r15 = .1, r16 = .1, r17 = .1, r18 = .1, 
+             species.vec = species.vec,
+             obs = native.mat, n0 = .1)
+
+############################
+#NLL Function
+############################
+
+#Multi process error - for the process error model, I just need to predict a number based on the previous timstep
+#I would calculate the timestep between recorded values similar to how we did with the spatial models
+#then the mean is your last observed value
+#variance is the variance of the last timestepx the number of time steps because the variance increases linearly with the number of timesteps out 
+#tbefore putting it into dnorm, you calculate the sd from the variance (sqrt(timesteps x variance))
+#qlogis of the predicted N 
+nll.multi.func.p<-function(lr1, lr2, lr3, lr4, lr5, lr6, lr7, lr8, lr9,
+                           lr10, lr11, lr12, lr13, lr14, lr15, lr16, lr17, lr18,
+                           species.vec,
+                           obs,ln0, lsd){
+  r1<-exp(lr1)
+  r2<-exp(lr2)
+  r3<-exp(lr3)
+  r4<-exp(lr4)
+  r5 <- exp(lr5)
+  r6 <- exp(lr6)
+  r7 <- exp(lr7)
+  r8 <- exp(lr8)
+  r9 <- exp(lr9)
+  r10 <- exp(lr10)
+  r11 <- exp(lr11)
+  r12 <- exp(lr12)
+  r13 <- exp(lr13)
+  r14 <- exp(lr14)
+  r15 <- exp(lr15)
+  r16 <- exp(lr16)
+  r17 <- exp(lr17)
+  r18 <- exp(lr18)
+  
+  s <-exp(lsd)
+  n0 <- exp(ln0)
+  
+  predN<-multi.func.p(r1=r1,r2=r2,r3=r3,r4=r4,r5=r5,r6=r6, r7=r7,r8=r8, 
+                      r9=r9, r10=r10,r11=r11, r12=r12, r13=r13, r14=r14, 
+                      r15=r15, r16=r16, r17=r17, r18=r18,
+                      obs=obs,species.vec = species.vec, n0 = n0)
+  
+  # obs2 <- obs[!is.na(obs)]
+  # predN2 <- predN[!is.na(obs)]
+  
+  # param <- dampack::beta_params(mean = predN2, sigma = sd)
+  # alpha <- param[1]
+  # alpha <- unlist(alpha)
+  # beta <- param[2]
+  # beta <- unlist(beta)
+  
+  predN[predN==0]<-.01
+  predN[predN==1]<-.99
+  # print(obs)
+  # print(predN)
+  liks<-0
+  
+  for(j in 1:nrow(obs)){
+    lastobs <- 0
+    for(i in 1:ncol(obs)){
+      if(!is.na(obs[j, i])){
+        tbtwn<-i-lastobs
+        # print(tbtwn)
+        liks<-c(liks, dnorm(x=qlogis(obs[j, i]),mean=qlogis(predN[j, i]),sd=sqrt(tbtwn*s^2)))
+        lastobs<-i
+        # print(liks)
+      }
+    }
+  }
+  
+  
+  
+  # likes <- dbeta(x=obs2,shape1 = alpha, shape2 = beta)
+  # likes <- dnorm(x=qlogis(obs2), mean=plogis(predN2), sd = sd)
+  
+  nll<--1*sum(log(liks[-1]))  
+  return(nll)
+}
+
+#test
+nll.multi.func.p(lr1 = log(.4), lr2 = log(.4),lr3 = log(.4),
+                 lr4 = log(.4),lr5 = log(.4),lr6 = log(.4),
+                 lr7 = log(.4),lr8 = log(.4),lr9 = log(.4), lr10 = log(.4), 
+                 lr11 = log(.4), lr12 = log(.4), lr13 = log(.4), lr14 = log(.4), lr15 = log(.4), 
+                 lr16 = log(.4), lr17 = log(.4), lr18 = log(.4), 
+                 ln0 = log(.01), obs = native.mat, lsd = log(.05), species.vec = species.vec)
+
+
+#####################
+#Find MLE parameters
+#####################
+
+library(bbmle)
+
+# Create list of starting guesses for the multi model
+start.list<-list(lr1=log(.1),
+                 lr2 = log(.2),
+                 lr3 = log(.1),
+                 lr4 = log(.1),
+                 lr5=log(.2),
+                 lr6 = log(.1),
+                 lr7 = log(.1),
+                 lr8 = log(.1),
+                 lr9 = log(.1),
+                 lr10 = log(.1),
+                 lr11 = log(.1),
+                 lr12 = log(.1),
+                 lr13 = log(.1),
+                 lr14 = log(.1),
+                 lr15 = log(.1),
+                 lr16 = log(.1),
+                 lr17 = log(.1),
+                 lr18 = log(.1),
+                 lsd = log(.05),
+                 ln0 = log(0.001))
+# Create list of observed data for model
+data.list<-list(obs=native.mat, species.vec = species.vec, method = "SANN")
+
+# # Find MLE parameter estimates
+fit_mp<-mle2(minuslogl=nll.multi.func.p,start=start.list,data=data.list, method = "SANN")
+# # store MLE parameter estimates
+cfs_mp<-exp(coef(fit_mp)) 
+cfs_mp
+
+##############################################################
+# Predict historical dynamics from MLE parameter estimates
+##############################################################
+
+pred_mp<-multi.func.p(r1 = cfs_mp[1], r2 = cfs_mp[2], r3 = cfs_mp[3],
+                      r4 = cfs_mp[4], r5 = cfs_mp[5], r6 = cfs_mp[6],
+                      r7 = cfs_mp[7], r8 = cfs_mp[8], r9 = cfs_mp[9],
+                      r10 = cfs_mp[10], r11 = cfs_mp[11], r12 = cfs_mp[12],
+                      r13 = cfs_mp[13], r14 = cfs_mp[14], r15 = cfs_mp[15],
+                      r16 = cfs_mp[16], r17 = cfs_mp[17], r18 = cfs_mp[18],
+                      n0 = cfs_mp[19], obs = native.mat, species.vec = species.vec)
+plot(native.mat, pred_mp, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
+abline(0, 1) # Add 1:1 line on figure indicating perfect fit
+summary(lm(as.vector(native.mat) ~ as.vector(pred_mp)))
+#mtext("R2 = 0.88", side=3)
+
+
+####now try H W####
+####################################################
+#Graph the species to determine that they are following logistic growth
+####################################################
+load("main_dfs.RData")
+
+library(ggplot2)
+library(magrittr)
+library(dplyr)
+library(gtools)
+
+####################################################
+# Make a new dataframe that is in a better format
+####################################################
+#only select columns that I need for the analysis
+native.dat <- greenhouse %>%
+  filter(Species != "PHAU") %>%
+  filter(Density == "H" & Phrag_Presence == "W")%>%
+  select(Species, Block, Density, Phrag_Presence, Date_Cleaned, Cover.Native)  %>%
+  arrange(Species) #put same species next to each other
+
+#but I have to change the name of the extra BICE
+native.dat$Block <- as.numeric(native.dat$Block)
+native.dat[3,2] <- 4
+native.dat[7,2] <- 4
+native.dat[11,2] <- 4
+native.dat[15,2] <- 4
+
+native.dat$ID_Col <- with(native.dat, paste0(Species, Block))
+
+###I now think this is actually wrong
+#make vectors to keep track of the species
+#I need to do the numbers differently here because BICE has 16 and SCAM has 8 
+#table(native.dat$Species)
+species.vec1 <- rep(1, 16)
+species.vec2 <- rep(2:14, each = 12)
+species.vec3 <- rep(15, 8)
+species.vec4 <- rep(16:18, each = 12)
+species.vec <- c(species.vec1, species.vec2, species.vec3, species.vec4)
+
+#rearrange so date is column
+native.dat <- reshape2::dcast(native.dat, ID_Col ~ Date_Cleaned, value.var = "Cover.Native")
+
+#now make a matrix
+native.mat <- as.matrix(native.dat[,-1]) #make it a matrix, without the ID_Col
+native.mat[is.na(native.mat)] <- 0 #make all NAs 0
+
+native.mat[native.mat == 0] <- 0.025 #get rid of 0s
+
+#add the extra days so that it becomes a daily timestep
+first <- matrix(NA, nrow = 54, ncol=17)
+second <- matrix(native.mat[,1])
+third <- matrix(NA, nrow = 54, ncol = 6)
+fourth <- matrix(native.mat[,2])
+fifth <- matrix(NA, nrow = 54, ncol = 6)
+sixth <- matrix(native.mat[,3])
+seventh <- matrix(NA, nrow = 54, ncol = 6)
+eighth <- matrix(native.mat[,4])
+
+native.mat <- cbind(first, second, third, fourth, fifth, sixth, seventh, eighth)
+
+###############################################################
+#State Prediction Funcions: 
+#Model with single and multi r and process vs observation error
+###############################################################
+
+#predict the mean (expected value) of every timestep when you don't have an observation- see below
+#Multi process error
+multi.func.p<-function(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, 
+                       r12, r13, r14, r15, r16, r17, r18,
+                       obs,n0, species.vec){
+  rvec <- c(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17, r18)
+  
+  dims <- dim(obs)
+  ntubs <- dims[1]
+  ts <- dims[2]
+  
+  Nout <- matrix(0, nrow = ntubs, ncol = ts)
+  for(i in 1:ntubs){
+    Nout[i,1]<-n0*(1+rvec[species.vec[i]]*(1-n0/.995))
+  }
+  
+  for(i in 2:ts){
+    for(j in 1:ntubs){
+      if(!is.na(obs[j, i-1])) {
+        Nout[j, i]<-obs[j, i-1]*(1+rvec[species.vec[j]]*(1-obs[j, i-1]/.995))
+      }
+      if(is.na(obs[j, i-1])){ #if it is an NA, do off the last predicted
+        Nout[j, i] <- Nout[j, i-1]*(1+rvec[species.vec[j]]*(1-Nout[j, i-1]/.995))
+      }
+    }
+  }
+  return(Nout)
+}
+
+#test
+multi.func.p(r1 = .7, r2 = .9, r3 = .9, r4 = .7, r5 = .9, r6 = .2, r7 = .7, r8 = .6,
+             r9 = .9, r10 = .1, r11 = .1, 
+             r12 = .1, r13 = .1, r14 = .1, r15 = .1, r16 = .1, r17 = .1, r18 = .1, 
+             species.vec = species.vec,
+             obs = native.mat, n0 = .1)
+
+############################
+#NLL Function
+############################
+
+#Multi process error - for the process error model, I just need to predict a number based on the previous timstep
+#I would calculate the timestep between recorded values similar to how we did with the spatial models
+#then the mean is your last observed value
+#variance is the variance of the last timestepx the number of time steps because the variance increases linearly with the number of timesteps out 
+#tbefore putting it into dnorm, you calculate the sd from the variance (sqrt(timesteps x variance))
+#qlogis of the predicted N 
+nll.multi.func.p<-function(lr1, lr2, lr3, lr4, lr5, lr6, lr7, lr8, lr9,
+                           lr10, lr11, lr12, lr13, lr14, lr15, lr16, lr17, lr18,
+                           species.vec,
+                           obs,ln0, lsd){
+  r1<-exp(lr1)
+  r2<-exp(lr2)
+  r3<-exp(lr3)
+  r4<-exp(lr4)
+  r5 <- exp(lr5)
+  r6 <- exp(lr6)
+  r7 <- exp(lr7)
+  r8 <- exp(lr8)
+  r9 <- exp(lr9)
+  r10 <- exp(lr10)
+  r11 <- exp(lr11)
+  r12 <- exp(lr12)
+  r13 <- exp(lr13)
+  r14 <- exp(lr14)
+  r15 <- exp(lr15)
+  r16 <- exp(lr16)
+  r17 <- exp(lr17)
+  r18 <- exp(lr18)
+  
+  s <-exp(lsd)
+  n0 <- exp(ln0)
+  
+  predN<-multi.func.p(r1=r1,r2=r2,r3=r3,r4=r4,r5=r5,r6=r6, r7=r7,r8=r8, 
+                      r9=r9, r10=r10,r11=r11, r12=r12, r13=r13, r14=r14, 
+                      r15=r15, r16=r16, r17=r17, r18=r18,
+                      obs=obs,species.vec = species.vec, n0 = n0)
+  
+  # obs2 <- obs[!is.na(obs)]
+  # predN2 <- predN[!is.na(obs)]
+  
+  # param <- dampack::beta_params(mean = predN2, sigma = sd)
+  # alpha <- param[1]
+  # alpha <- unlist(alpha)
+  # beta <- param[2]
+  # beta <- unlist(beta)
+  
+  predN[predN==0]<-.01
+  predN[predN==1]<-.99
+  # print(obs)
+  # print(predN)
+  liks<-0
+  
+  for(j in 1:nrow(obs)){
+    lastobs <- 0
+    for(i in 1:ncol(obs)){
+      if(!is.na(obs[j, i])){
+        tbtwn<-i-lastobs
+        # print(tbtwn)
+        liks<-c(liks, dnorm(x=qlogis(obs[j, i]),mean=qlogis(predN[j, i]),sd=sqrt(tbtwn*s^2)))
+        lastobs<-i
+        # print(liks)
+      }
+    }
+  }
+  
+  
+  
+  # likes <- dbeta(x=obs2,shape1 = alpha, shape2 = beta)
+  # likes <- dnorm(x=qlogis(obs2), mean=plogis(predN2), sd = sd)
+  
+  nll<--1*sum(log(liks[-1]))  
+  return(nll)
+}
+
+#test
+nll.multi.func.p(lr1 = log(.4), lr2 = log(.4),lr3 = log(.4),
+                 lr4 = log(.4),lr5 = log(.4),lr6 = log(.4),
+                 lr7 = log(.4),lr8 = log(.4),lr9 = log(.4), lr10 = log(.4), 
+                 lr11 = log(.4), lr12 = log(.4), lr13 = log(.4), lr14 = log(.4), lr15 = log(.4), 
+                 lr16 = log(.4), lr17 = log(.4), lr18 = log(.4), 
+                 ln0 = log(.01), obs = native.mat, lsd = log(.05), species.vec = species.vec)
+
+
+#####################
+#Find MLE parameters
+#####################
+
+library(bbmle)
+
+# Create list of starting guesses for the multi model
+start.list<-list(lr1=log(.1),
+                 lr2 = log(.2),
+                 lr3 = log(.1),
+                 lr4 = log(.1),
+                 lr5=log(.2),
+                 lr6 = log(.1),
+                 lr7 = log(.1),
+                 lr8 = log(.1),
+                 lr9 = log(.1),
+                 lr10 = log(.1),
+                 lr11 = log(.1),
+                 lr12 = log(.1),
+                 lr13 = log(.1),
+                 lr14 = log(.1),
+                 lr15 = log(.1),
+                 lr16 = log(.1),
+                 lr17 = log(.1),
+                 lr18 = log(.1),
+                 lsd = log(.05),
+                 ln0 = log(0.001))
+# Create list of observed data for model
+data.list<-list(obs=native.mat, species.vec = species.vec, method = "SANN")
+
+# # Find MLE parameter estimates
+fit_mp<-mle2(minuslogl=nll.multi.func.p,start=start.list,data=data.list, method = "SANN")
+# # store MLE parameter estimates
+cfs_mp<-exp(coef(fit_mp)) 
+cfs_mp
+
+##############################################################
+# Predict historical dynamics from MLE parameter estimates
+##############################################################
+
+pred_mp<-multi.func.p(r1 = cfs_mp[1], r2 = cfs_mp[2], r3 = cfs_mp[3],
+                      r4 = cfs_mp[4], r5 = cfs_mp[5], r6 = cfs_mp[6],
+                      r7 = cfs_mp[7], r8 = cfs_mp[8], r9 = cfs_mp[9],
+                      r10 = cfs_mp[10], r11 = cfs_mp[11], r12 = cfs_mp[12],
+                      r13 = cfs_mp[13], r14 = cfs_mp[14], r15 = cfs_mp[15],
+                      r16 = cfs_mp[16], r17 = cfs_mp[17], r18 = cfs_mp[18],
+                      n0 = cfs_mp[19], obs = native.mat, species.vec = species.vec)
+plot(native.mat, pred_mp, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
+abline(0, 1) # Add 1:1 line on figure indicating perfect fit
+summary(lm(as.vector(native.mat) ~ as.vector(pred_mp)))
+#mtext("R2 = 0.88", side=3)
+
+
+####try with an individual species####
+####################################################
+#Graph the species to determine that they are following logistic growth
+####################################################
+load("main_dfs.RData")
+
+library(ggplot2)
+library(magrittr)
+library(dplyr)
+library(gtools)
+
+
+####################################################
+# Make a new dataframe that is in a better format
+####################################################
+#only select columns that I need for the analysis
+native.dat <- greenhouse %>%
+  filter(Species == "HENU") %>% 
+  select(Species, Block, Density, Phrag_Presence, Date_Cleaned, Cover.Native)  %>%
+  arrange(Density, Phrag_Presence) #put likes together
+
+native.dat$ID_Col <- with(native.dat, paste0(Species, Block, Density, Phrag_Presence))
+
+#make vectors to keep track of the treatment
+#1 = HW, 2 = HWO, 3 = LW, 4 = LWO
+species.vec <- rep(1:4, each = 3)
+
+#rearrange so date is column
+native.dat <- reshape2::dcast(native.dat, ID_Col ~ Date_Cleaned, value.var = "Cover.Native")
+
+#now make a matrix
+native.mat <- as.matrix(native.dat[,-1]) #make it a matrix, without the ID_Col
+native.mat[is.na(native.mat)] <- 0 #make all NAs 0
+
+native.mat[native.mat == 0] <- 0.025 #get rid of 0s
+
+#add the extra days so that it becomes a daily timestep
+first <- matrix(NA, nrow = 12, ncol=17)
+second <- matrix(native.mat[,1])
+third <- matrix(NA, nrow = 12, ncol = 6)
+fourth <- matrix(native.mat[,2])
+fifth <- matrix(NA, nrow = 12, ncol = 6)
+sixth <- matrix(native.mat[,3])
+seventh <- matrix(NA, nrow = 12, ncol = 6)
+eighth <- matrix(native.mat[,4])
+
+native.mat <- cbind(first, second, third, fourth, fifth, sixth, seventh, eighth)
+
+###############################################################
+#State Prediction Funcions: 
+#Model with single and multi r and process vs observation error
+###############################################################
+
+#predict the mean (expected value) of every timestep when you don't have an observation- see below
+#Multi process error
+multi.func.p<-function(r1, r2, r3, r4,  obs,n0, species.vec){
+  rvec <- c(r1, r2, r3, r4)
+  
+  dims <- dim(obs)
+  ntubs <- dims[1]
+  ts <- dims[2]
+  
+  Nout <- matrix(0, nrow = ntubs, ncol = ts)
+  for(i in 1:ntubs){
+    Nout[i,1]<-n0*(1+rvec[species.vec[i]]*(1-n0/.995))
+  }
+  
+  for(i in 2:ts){
+    for(j in 1:ntubs){
+      if(!is.na(obs[j, i-1])) {
+        Nout[j, i]<-obs[j, i-1]*(1+rvec[species.vec[j]]*(1-obs[j, i-1]/.995))
+      }
+      if(is.na(obs[j, i-1])){ #if it is an NA, do off the last predicted
+        Nout[j, i] <- Nout[j, i-1]*(1+rvec[species.vec[j]]*(1-Nout[j, i-1]/.995))
+      }
+    }
+  }
+  return(Nout)
+}
+
+#test
+multi.func.p(r1 = .7, r2 = .9, r3 = .9, r4 = .7, species.vec = species.vec,
+             obs = native.mat, n0 = .1)
+
+############################
+#NLL Function
+############################
+
+#Multi process error - for the process error model, I just need to predict a number based on the previous timstep
+#I would calculate the timestep between recorded values similar to how we did with the spatial models
+#then the mean is your last observed value
+#variance is the variance of the last timestepx the number of time steps because the variance increases linearly with the number of timesteps out 
+#tbefore putting it into dnorm, you calculate the sd from the variance (sqrt(timesteps x variance))
+#qlogis of the predicted N 
+nll.multi.func.p<-function(lr1, lr2, lr3, lr4, species.vec,
+                           obs,ln0, lsd){
+  r1<-exp(lr1)
+  r2<-exp(lr2)
+  r3<-exp(lr3)
+  r4<-exp(lr4)
+  
+  s <-exp(lsd)
+  n0 <- exp(ln0)
+  
+  predN<-multi.func.p(r1=r1,r2=r2,r3=r3,r4=r4,
+                      obs=obs,species.vec = species.vec, n0 = n0)
+  
+  # obs2 <- obs[!is.na(obs)]
+  # predN2 <- predN[!is.na(obs)]
+  
+  # param <- dampack::beta_params(mean = predN2, sigma = sd)
+  # alpha <- param[1]
+  # alpha <- unlist(alpha)
+  # beta <- param[2]
+  # beta <- unlist(beta)
+  
+  predN[predN==0]<-.01
+  predN[predN==1]<-.99
+  # print(obs)
+  # print(predN)
+  liks<-0
+  
+  for(j in 1:nrow(obs)){
+    lastobs <- 0
+    for(i in 1:ncol(obs)){
+      if(!is.na(obs[j, i])){
+        tbtwn<-i-lastobs
+        # print(tbtwn)
+        liks<-c(liks, dnorm(x=qlogis(obs[j, i]),mean=qlogis(predN[j, i]),sd=sqrt(tbtwn*s^2)))
+        lastobs<-i
+        # print(liks)
+      }
+    }
+  }
+  
+  
+  
+  # likes <- dbeta(x=obs2,shape1 = alpha, shape2 = beta)
+  # likes <- dnorm(x=qlogis(obs2), mean=plogis(predN2), sd = sd)
+  
+  nll<--1*sum(log(liks[-1]))  
+  return(nll)
+}
+
+#test
+nll.multi.func.p(lr1 = log(.4), lr2 = log(.4),lr3 = log(.4),
+                 lr4 = log(.4),
+                 ln0 = log(.01), obs = native.mat, lsd = log(.05), species.vec = species.vec)
+
+
+#####################
+#Find MLE parameters
+#####################
+
+library(bbmle)
+
+# Create list of starting guesses for the multi model
+start.list<-list(lr1=log(.1),
+                 lr2 = log(.2),
+                 lr3 = log(.1),
+                 lr4 = log(.1),
+                 lsd = log(.05),
+                 ln0 = log(0.001))
+# Create list of observed data for model
+data.list<-list(obs=native.mat, species.vec = species.vec, method = "SANN")
+
+# # Find MLE parameter estimates
+fit_mp<-mle2(minuslogl=nll.multi.func.p,start=start.list,data=data.list, method = "SANN")
+# # store MLE parameter estimates
+cfs_mp<-exp(coef(fit_mp)) 
+cfs_mp
+
+##############################################################
+# Predict historical dynamics from MLE parameter estimates
+##############################################################
+
+pred_mp<-multi.func.p(r1 = cfs_mp[1], r2 = cfs_mp[2], r3 = cfs_mp[3],
+                      r4 = cfs_mp[4], n0 = cfs_mp[5], obs = native.mat, species.vec = species.vec)
+plot(native.mat, pred_mp, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
+abline(0, 1) # Add 1:1 line on figure indicating perfect fit
+summary(lm(as.vector(native.mat) ~ as.vector(pred_mp)))
+#mtext("R2 = 0.88", side=3)
+
+
+####now try all w, both h and l####
+####################################################
+#Graph the species to determine that they are following logistic growth
+####################################################
+load("main_dfs.RData")
+
+library(ggplot2)
+library(magrittr)
+library(dplyr)
+library(gtools)
+
+####################################################
+# Make a new dataframe that is in a better format
+####################################################
+#only select columns that I need for the analysis
+native.dat <- greenhouse %>%
+  filter(Species != "PHAU") %>%
+  filter(Phrag_Presence == "W")%>%
+  select(Species, Block, Density, Phrag_Presence, Date_Cleaned, Cover.Native)  %>%
+  arrange(Species,Density) #put same species next to each other
+
+#but I have to change the name of the extra BICE
+native.dat$Block <- as.numeric(native.dat$Block)
+native.dat[3,2] <- 4
+native.dat[7,2] <- 4
+native.dat[11,2] <- 4
+native.dat[15,2] <- 4
+
+native.dat$ID_Col <- with(native.dat, paste0(Species, Block, Density))
+
+###I now think this is wrong
+#make vectors to keep track of the species
+#I need to do the numbers differently here because BICE has 16 and SCAM has 8 
+table(native.dat$Species, native.dat$Density)
+species.vec1 <- rep(1, 16)
+species.vec2 <- rep(2:28, each = 12)
+species.vec3 <- rep(29, 8)
+species.vec4 <- rep(30:36, each = 12)
+species.vec <- c(species.vec1, species.vec2, species.vec3, species.vec4)
+
+#rearrange so date is column
+native.dat <- reshape2::dcast(native.dat, ID_Col ~ Date_Cleaned, value.var = "Cover.Native")
+
+#now make a matrix
+native.mat <- as.matrix(native.dat[,-1]) #make it a matrix, without the ID_Col
+native.mat[is.na(native.mat)] <- 0 #make all NAs 0
+
+native.mat[native.mat == 0] <- 0.025 #get rid of 0s
+
+#add the extra days so that it becomes a daily timestep
+first <- matrix(NA, nrow = 108, ncol=17)
+second <- matrix(native.mat[,1])
+third <- matrix(NA, nrow = 108, ncol = 6)
+fourth <- matrix(native.mat[,2])
+fifth <- matrix(NA, nrow = 108, ncol = 6)
+sixth <- matrix(native.mat[,3])
+seventh <- matrix(NA, nrow = 108, ncol = 6)
+eighth <- matrix(native.mat[,4])
+
+native.mat <- cbind(first, second, third, fourth, fifth, sixth, seventh, eighth)
+
+###############################################################
+#State Prediction Funcions: 
+#Model with single and multi r and process vs observation error
+###############################################################
+
+#predict the mean (expected value) of every timestep when you don't have an observation- see below
+#Multi process error
+multi.func.p<-function(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, 
+                       r12, r13, r14, r15, r16, r17, r18,
+                       r19, r20, r21, r22, r23, r24, r25, 
+                       r26, r27, r28, r29, 
+                       r30, r31, r32, r33, r34, r35, r36,
+                       obs,n0, species.vec){
+  rvec <- c(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, 
+            r11, r12, r13, r14, r15, r16, r17, r18, 
+            r19, r20, r21, r22, r23, r24, r25, 
+            r26, r27, r28, r29, 
+            r30, r31, r32, r33, r34, r35, r36)
+  
+  dims <- dim(obs)
+  ntubs <- dims[1]
+  ts <- dims[2]
+  
+  Nout <- matrix(0, nrow = ntubs, ncol = ts)
+  for(i in 1:ntubs){
+    Nout[i,1]<-n0*(1+rvec[species.vec[i]]*(1-n0/.995))
+  }
+  
+  for(i in 2:ts){
+    for(j in 1:ntubs){
+      if(!is.na(obs[j, i-1])) {
+        Nout[j, i]<-obs[j, i-1]*(1+rvec[species.vec[j]]*(1-obs[j, i-1]/.995))
+      }
+      if(is.na(obs[j, i-1])){ #if it is an NA, do off the last predicted
+        Nout[j, i] <- Nout[j, i-1]*(1+rvec[species.vec[j]]*(1-Nout[j, i-1]/.995))
+      }
+    }
+  }
+  return(Nout)
+}
+
+#test
+multi.func.p(r1 = .7, r2 = .9, r3 = .9, r4 = .7, r5 = .9, r6 = .2, r7 = .7, r8 = .6,
+             r9 = .9, r10 = .1, r11 = .1, 
+             r12 = .1, r13 = .1, r14 = .1, r15 = .1, r16 = .1, r17 = .1, r18 = .1, 
+             r19 =.1, r20=.1, r21=.1, 
+             r22=.1, r23=.1, r24=.1, r25=.1,
+             r26=.1, r27=.1, r28=.1, r29=.1,
+             r30=.1, r31=.1, r32=.1, r33=.1, r34=.1, r35=.1, r36=.1,
+             species.vec = species.vec,
+             obs = native.mat, n0 = .1)
+
+############################
+#NLL Function
+############################
+
+#Multi process error - for the process error model, I just need to predict a number based on the previous timstep
+#I would calculate the timestep between recorded values similar to how we did with the spatial models
+#then the mean is your last observed value
+#variance is the variance of the last timestepx the number of time steps because the variance increases linearly with the number of timesteps out 
+#tbefore putting it into dnorm, you calculate the sd from the variance (sqrt(timesteps x variance))
+#qlogis of the predicted N 
+nll.multi.func.p<-function(lr1, lr2, lr3, lr4, lr5, lr6, lr7, lr8, lr9,
+                           lr10, lr11, lr12, lr13, lr14, lr15, lr16, lr17, lr18,
+                           lr19, lr20, lr21, lr22, lr23, lr24, lr25, lr26, lr27,
+                           lr28, lr29, lr30, lr31, lr32, lr33, lr34, lr35, lr36,
+                           species.vec,
+                           obs,ln0, lsd){
+  r1<-exp(lr1)
+  r2<-exp(lr2)
+  r3<-exp(lr3)
+  r4<-exp(lr4)
+  r5 <- exp(lr5)
+  r6 <- exp(lr6)
+  r7 <- exp(lr7)
+  r8 <- exp(lr8)
+  r9 <- exp(lr9)
+  r10 <- exp(lr10)
+  r11 <- exp(lr11)
+  r12 <- exp(lr12)
+  r13 <- exp(lr13)
+  r14 <- exp(lr14)
+  r15 <- exp(lr15)
+  r16 <- exp(lr16)
+  r17 <- exp(lr17)
+  r18 <- exp(lr18)
+  r19 <- exp(lr19)
+  r20 <- exp(lr20)
+  r21 <- exp(lr21)
+  r22 <- exp(lr22)
+  r23 <- exp(lr23)
+  r24 <- exp(lr24)
+  r25 <- exp(lr25)
+  r26 <- exp(lr26)
+  r27 <- exp(lr27)
+  r28 <- exp(lr28)
+  r29 <- exp(lr29)
+  r30 <- exp(lr30)
+  r31 <- exp(lr31)
+  r32 <- exp(lr32)
+  r33 <- exp(lr33)
+  r34 <- exp(lr34)
+  r35 <- exp(lr35)
+  r36 <- exp(lr36)
+  
+  s <-exp(lsd)
+  n0 <- exp(ln0)
+  
+  predN<-multi.func.p(r1=r1,r2=r2,r3=r3,r4=r4,r5=r5,r6=r6, r7=r7,r8=r8, 
+                      r9=r9, r10=r10,r11=r11, r12=r12, r13=r13, r14=r14, 
+                      r15=r15, r16=r16, r17=r17, r18=r18, r19=r19, r20=r20,
+                      r21=r21, 
+                      r22=r22, r23=r23, r24=r24, r25=r25,r26=r26,
+                      r27=r27, r28=r28, r29=r29, r30=r30, r31=r31, r32=r32,
+                      r33=r33, r34=r34, r35=r35, r36=r36,
+                      obs=obs,species.vec = species.vec, n0 = n0)
+  
+  # obs2 <- obs[!is.na(obs)]
+  # predN2 <- predN[!is.na(obs)]
+  
+  # param <- dampack::beta_params(mean = predN2, sigma = sd)
+  # alpha <- param[1]
+  # alpha <- unlist(alpha)
+  # beta <- param[2]
+  # beta <- unlist(beta)
+  
+  predN[predN==0]<-.01
+  predN[predN==1]<-.99
+  # print(obs)
+  # print(predN)
+  liks<-0
+  
+  for(j in 1:nrow(obs)){
+    lastobs <- 0
+    for(i in 1:ncol(obs)){
+      if(!is.na(obs[j, i])){
+        tbtwn<-i-lastobs
+        # print(tbtwn)
+        liks<-c(liks, dnorm(x=qlogis(obs[j, i]),mean=qlogis(predN[j, i]),sd=sqrt(tbtwn*s^2)))
+        lastobs<-i
+        # print(liks)
+      }
+    }
+  }
+  
+  
+  
+  # likes <- dbeta(x=obs2,shape1 = alpha, shape2 = beta)
+  # likes <- dnorm(x=qlogis(obs2), mean=plogis(predN2), sd = sd)
+  
+  nll<--1*sum(log(liks[-1]))  
+  return(nll)
+}
+
+#test
+nll.multi.func.p(lr1 = log(.4), lr2 = log(.4),lr3 = log(.4),
+                 lr4 = log(.4),lr5 = log(.4),lr6 = log(.4),
+                 lr7 = log(.4),lr8 = log(.4),lr9 = log(.4), lr10 = log(.4), 
+                 lr11 = log(.4), lr12 = log(.4), lr13 = log(.4), lr14 = log(.4), lr15 = log(.4), 
+                 lr16 = log(.4), lr17 = log(.4), lr18 = log(.4), lr19 = log(.4),
+                 lr20 = log(.4), lr21 = log(.4), 
+                 lr22 = log(.4), lr23 = log(.4),
+                 lr24 = log(.4), lr25 = log(.4),
+                 lr26 = log(.4), lr27 = log(.4),
+                 lr28 = log(.4), lr29 = log(.4), lr30 = log(.4), lr31 = log(.4),
+                 lr32 = log(.4), lr33 = log(.4), lr34 = log(.4), lr35 = log(.4),
+                 lr36 = log(.4),
+                 ln0 = log(.01), obs = native.mat, lsd = log(.05), species.vec = species.vec)
+
+
+#####################
+#Find MLE parameters
+#####################
+
+library(bbmle)
+
+# Create list of starting guesses for the multi model
+start.list<-list(lr1=log(.1),
+                 lr2 = log(.2),
+                 lr3 = log(.1),
+                 lr4 = log(.1),
+                 lr5=log(.2),
+                 lr6 = log(.1),
+                 lr7 = log(.1),
+                 lr8 = log(.1),
+                 lr9 = log(.1),
+                 lr10 = log(.1),
+                 lr11 = log(.1),
+                 lr12 = log(.1),
+                 lr13 = log(.1),
+                 lr14 = log(.1),
+                 lr15 = log(.1),
+                 lr16 = log(.1),
+                 lr17 = log(.1),
+                 lr18 = log(.1),
+                 lr19 = log(.1),
+                 lr20 = log(.1),
+                 lr21 = log(.1),
+                 lr22 = log(.1),
+                 lr23 = log(.1),
+                 lr24 = log(.1),
+                 lr25 = log(.1),
+                 lr26 = log(.1),
+                 lr27 = log(.1),
+                 lr28 = log(.1),
+                 lr29 = log(.1),
+                 lr30 = log(.1),
+                 lr31 = log(.1),
+                 lr32 = log(.1),
+                 lr33 = log(.1),
+                 lr34 = log(.1),
+                 lr35 = log(.1),
+                 lr36 = log(.1),
+                 lsd = log(.05),
+                 ln0 = log(0.0001))
+# Create list of observed data for model
+data.list<-list(obs=native.mat, species.vec = species.vec, method = "SANN")
+
+# # Find MLE parameter estimates
+fit_mp<-mle2(minuslogl=nll.multi.func.p,start=start.list,data=data.list, method = "SANN")
+# # store MLE parameter estimates
+cfs_mp<-exp(coef(fit_mp)) 
+cfs_mp
+##############################################################
+# Predict historical dynamics from MLE parameter estimates
+##############################################################
+
+pred_mp<-multi.func.p(r1 = cfs_mp[1], r2 = cfs_mp[2], r3 = cfs_mp[3],
+                      r4 = cfs_mp[4], r5 = cfs_mp[5], r6 = cfs_mp[6],
+                      r7 = cfs_mp[7], r8 = cfs_mp[8], r9 = cfs_mp[9],
+                      r10 = cfs_mp[10], r11 = cfs_mp[11], r12 = cfs_mp[12],
+                      r13 = cfs_mp[13], r14 = cfs_mp[14], r15 = cfs_mp[15],
+                      r16 = cfs_mp[16], r17 = cfs_mp[17], r18 = cfs_mp[18],
+                      r19 = cfs_mp[19], r20 = cfs_mp[20], r21 = cfs_mp[21],
+                      r22 = cfs_mp[22], r23 = cfs_mp[23], r24 = cfs_mp[24],
+                      r25 = cfs_mp[25], r26 = cfs_mp[26], r27 = cfs_mp[27],
+                      r28 = cfs_mp[28], r29 = cfs_mp[29], r30 = cfs_mp[30],
+                      r31 = cfs_mp[31], r32 = cfs_mp[32], r33 = cfs_mp[33],
+                      r34 = cfs_mp[34], r35 = cfs_mp[35], r36 = cfs_mp[36],
+                      n0 = cfs_mp[37], obs = native.mat, species.vec = species.vec)
+plot(native.mat, pred_mp, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
+abline(0, 1) # Add 1:1 line on figure indicating perfect fit
+summary(lm(as.vector(native.mat) ~ as.vector(pred_mp)))
+#mtext("R2 = 0.88", side=3)
+
+####now literally everything####
+####################################################
+#Graph the species to determine that they are following logistic growth
+####################################################
+load("main_dfs.RData")
+
+library(ggplot2)
+library(magrittr)
+library(dplyr)
+library(gtools)
+
+####################################################
+# Make a new dataframe that is in a better format
+####################################################
+#only select columns that I need for the analysis
+native.dat <- greenhouse %>%
+  filter(Species != "PHAU") %>%
+  select(Species, Block, Density, Phrag_Presence, Date_Cleaned, Cover.Native)  %>%
+  arrange(Species,Density, Phrag_Presence) #put same species next to each other
+
+#but I have to change the name of the extra BICE and SCAM
+native.dat$Block <- as.numeric(native.dat$Block)
+native.dat[3,2] <- 2.5
+native.dat[7,2] <- 2.5
+native.dat[11,2] <- 2.5
+native.dat[15,2] <- 2.5
+
+native.dat[683, 2] <- 2.5
+native.dat[687, 2] <- 2.5
+native.dat[691, 2] <- 2.5
+native.dat[695, 2] <- 2.5
+
+native.dat$ID_Col <- with(native.dat, paste0(Species, Density, Phrag_Presence, Block))
+#rearrange so date is column
+native.dat <- reshape2::dcast(native.dat, ID_Col ~ Date_Cleaned, value.var = "Cover.Native")
+
+#make vectors to keep track of the species
+#I need to do the numbers differently here because BICE has 16 and SCAM has 8 
+#species go hw, hwo, lw, lwo
+species.vec1 <- rep(1, 4)
+species.vec2 <- rep(2, 2)
+species.vec3 <- rep(3:56, each = 3)
+species.vec4 <- rep(57, 2)
+species.vec5 <- rep(58, 4)
+species.vec6 <- rep(59:72, each = 3)
+species.vec <- c(species.vec1, species.vec2, species.vec3, species.vec4,
+                 species.vec5, species.vec6)
+
+
+
+
+#now make a matrix
+native.mat <- as.matrix(native.dat[,-1]) #make it a matrix, without the ID_Col
+native.mat[is.na(native.mat)] <- 0 #make all NAs 0
+
+native.mat[native.mat == 0] <- 0.025 #get rid of 0s
+
+#add the extra days so that it becomes a daily timestep
+first <- matrix(NA, nrow = 216, ncol=17)
+second <- matrix(native.mat[,1])
+third <- matrix(NA, nrow = 216, ncol = 6)
+fourth <- matrix(native.mat[,2])
+fifth <- matrix(NA, nrow = 216, ncol = 6)
+sixth <- matrix(native.mat[,3])
+seventh <- matrix(NA, nrow = 216, ncol = 6)
+eighth <- matrix(native.mat[,4])
+
+native.mat <- cbind(first, second, third, fourth, fifth, sixth, seventh, eighth)
+
+###############################################################
+#State Prediction Funcions: 
+#Model with single and multi r and process vs observation error
+###############################################################
+
+#predict the mean (expected value) of every timestep when you don't have an observation- see below
+#Multi process error
+multi.func.p<-function(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, 
+                       r12, r13, r14, r15, r16, r17, r18,
+                       r19, r20, r21, r22, r23, r24, r25, 
+                       r26, r27, r28, r29, r30, r31, r32, r33, r34, r35, r36,
+                       r37, r38, r39, r40, r41, r42, r43, r44, r45, r46, r47, 
+                       r48, r49, r50, r51, r52, r53, r54,
+                       r55, r56, r57, r58, r59, r60, r61, 
+                       r62, r63, r64, r65, r66, r67, r68, r69, r70, r71, r72,
+                       obs,n0, species.vec){
+  rvec <- c(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, 
+            r11, r12, r13, r14, r15, r16, r17, r18, 
+            r19, r20, r21, r22, r23, r24, r25, r26, r27, r28,
+            r29, r30, r31, r32, r33, r34, r35, r36,
+            r37, r38, r39, r40, r41, r42, r43, r44, r45, r46, r47, 
+            r48, r49, r50, r51, r52, r53, r54,
+            r55, r56, r57, r58, r59, r60, r61, 
+            r62, r63, r64, r65, r66, r67, r68, r69, r70, r71, r72)
+  
+  dims <- dim(obs)
+  ntubs <- dims[1]
+  ts <- dims[2]
+  
+  Nout <- matrix(0, nrow = ntubs, ncol = ts)
+  for(i in 1:ntubs){
+    Nout[i,1]<-n0*(1+rvec[species.vec[i]]*(1-n0/.995))
+  }
+  
+  for(i in 2:ts){
+    for(j in 1:ntubs){
+      if(!is.na(obs[j, i-1])) {
+        Nout[j, i]<-obs[j, i-1]*(1+rvec[species.vec[j]]*(1-obs[j, i-1]/.995))
+      }
+      if(is.na(obs[j, i-1])){ #if it is an NA, do off the last predicted
+        Nout[j, i] <- Nout[j, i-1]*(1+rvec[species.vec[j]]*(1-Nout[j, i-1]/.995))
+      }
+    }
+  }
+  return(Nout)
+}
+
+#test
+multi.func.p(r1 = .7, r2 = .9, r3 = .9, r4 = .7, r5 = .9, r6 = .2, r7 = .7, r8 = .6,
+             r9 = .9, r10 = .1, r11 = .1, 
+             r12 = .1, r13 = .1, r14 = .1, r15 = .1, r16 = .1, r17 = .1, r18 = .1, 
+             r19 =.1, r20=.1, r21=.1, 
+             r22=.1, r23=.1, r24=.1, r25=.1,
+             r26=.1, r27=.1, r28=.1, r29=.1,
+             r30=.1, r31=.1, r32=.1, r33=.1, r34=.1, r35=.1, r36=.1, 
+             r37=.1, r38=.1, r39=.1, r40=.1, r41=.1, r42=.1, r43=.1, r44=.1, 
+             r45=.1, r46=.1, r47=.1, 
+             r48=.1, r49=.1, r50=.1, r51=.1, r52=.1, r53=.1, r54=.1,
+             r55=.1, r56=.1, r57=.1, r58=.1, r59=.1, r60=.1, r61=.1, 
+             r62=.1, r63=.1, r64=.1, r65=.1, r66=.1, r67=.1, r68=.1, 
+             r69=.1, r70=.1, r71=.1, r72=.1,
+             species.vec = species.vec,
+             obs = native.mat, n0 = .1)
+
+############################
+#NLL Function
+############################
+
+#Multi process error - for the process error model, I just need to predict a number based on the previous timstep
+#I would calculate the timestep between recorded values similar to how we did with the spatial models
+#then the mean is your last observed value
+#variance is the variance of the last timestepx the number of time steps because the variance increases linearly with the number of timesteps out 
+#tbefore putting it into dnorm, you calculate the sd from the variance (sqrt(timesteps x variance))
+#qlogis of the predicted N 
+nll.multi.func.p<-function(lr1, lr2, lr3, lr4, lr5, lr6, lr7, lr8, lr9,
+                           lr10, lr11, lr12, lr13, lr14, lr15, lr16, lr17, lr18,
+                           lr19, lr20, lr21, lr22, lr23, lr24, lr25, lr26, lr27,
+                           lr28, lr29, lr30, lr31, lr32, lr33, lr34, lr35, lr36,
+                           lr37, lr38, lr39, lr40, lr41, lr42, lr43, lr44, lr45,
+                           lr46, lr47, lr48, lr49, lr50, lr51, lr52, lr53, lr54,
+                           lr55, lr56, lr57, lr58, lr59, lr60, lr61, lr62, lr63,
+                           lr64, lr65, lr66, lr67, lr68, lr69, lr70, lr71, lr72,
+                           species.vec,
+                           obs,ln0, lsd){
+  r1<-exp(lr1)
+  r2<-exp(lr2)
+  r3<-exp(lr3)
+  r4<-exp(lr4)
+  r5 <- exp(lr5)
+  r6 <- exp(lr6)
+  r7 <- exp(lr7)
+  r8 <- exp(lr8)
+  r9 <- exp(lr9)
+  r10 <- exp(lr10)
+  r11 <- exp(lr11)
+  r12 <- exp(lr12)
+  r13 <- exp(lr13)
+  r14 <- exp(lr14)
+  r15 <- exp(lr15)
+  r16 <- exp(lr16)
+  r17 <- exp(lr17)
+  r18 <- exp(lr18)
+  r19 <- exp(lr19)
+  r20 <- exp(lr20)
+  r21 <- exp(lr21)
+  r22 <- exp(lr22)
+  r23 <- exp(lr23)
+  r24 <- exp(lr24)
+  r25 <- exp(lr25)
+  r26 <- exp(lr26)
+  r27 <- exp(lr27)
+  r28 <- exp(lr28)
+  r29 <- exp(lr29)
+  r30 <- exp(lr30)
+  r31 <- exp(lr31)
+  r32 <- exp(lr32)
+  r33 <- exp(lr33)
+  r34 <- exp(lr34)
+  r35 <- exp(lr35)
+  r36 <- exp(lr36)
+  r37<-exp(lr37)
+  r38<-exp(lr38)
+  r39<-exp(lr39)
+  r40<-exp(lr40)
+  r41 <- exp(lr41)
+  r42 <- exp(lr42)
+  r43 <- exp(lr43)
+  r44 <- exp(lr44)
+  r45 <- exp(lr45)
+  r46 <- exp(lr46)
+  r47 <- exp(lr47)
+  r48 <- exp(lr48)
+  r49 <- exp(lr49)
+  r50 <- exp(lr50)
+  r51 <- exp(lr51)
+  r52 <- exp(lr52)
+  r53 <- exp(lr53)
+  r54 <- exp(lr54)
+  r55 <- exp(lr55)
+  r56 <- exp(lr56)
+  r57 <- exp(lr57)
+  r58 <- exp(lr58)
+  r59 <- exp(lr59)
+  r60 <- exp(lr60)
+  r61 <- exp(lr61)
+  r62 <- exp(lr62)
+  r63 <- exp(lr63)
+  r64 <- exp(lr64)
+  r65 <- exp(lr65)
+  r66 <- exp(lr66)
+  r67 <- exp(lr67)
+  r68 <- exp(lr68)
+  r69 <- exp(lr69)
+  r70 <- exp(lr70)
+  r71 <- exp(lr71)
+  r72 <- exp(lr72)
+  
+  s <-exp(lsd)
+  n0 <- exp(ln0)
+  
+  predN<-multi.func.p(r1=r1,r2=r2,r3=r3,r4=r4,r5=r5,r6=r6, r7=r7,r8=r8, 
+                      r9=r9, r10=r10,r11=r11, r12=r12, r13=r13, r14=r14, 
+                      r15=r15, r16=r16, r17=r17, r18=r18, r19=r19, r20=r20,
+                      r21=r21, 
+                      r22=r22, r23=r23, r24=r24, r25=r25,r26=r26,
+                      r27=r27, r28=r28, r29=r29, r30=r30, r31=r31, r32=r32,
+                      r33=r33, r34=r34, r35=r35, r36=r36,
+                      r37, r38, r39, r40, r41, r42, r43, r44, r45, r46, r47, 
+                      r48, r49, r50, r51, r52, r53, r54,
+                      r55, r56, r57, r58, r59, r60, r61, 
+                      r62, r63, r64, r65, r66, r67, r68, r69, r70, r71, r72,
+                      obs=obs,species.vec = species.vec, n0 = n0)
+  
+  # obs2 <- obs[!is.na(obs)]
+  # predN2 <- predN[!is.na(obs)]
+  
+  # param <- dampack::beta_params(mean = predN2, sigma = sd)
+  # alpha <- param[1]
+  # alpha <- unlist(alpha)
+  # beta <- param[2]
+  # beta <- unlist(beta)
+  
+  predN[predN==0]<-.01
+  predN[predN==1]<-.99
+  # print(obs)
+  # print(predN)
+  liks<-0
+  
+  for(j in 1:nrow(obs)){
+    lastobs <- 0
+    for(i in 1:ncol(obs)){
+      if(!is.na(obs[j, i])){
+        tbtwn<-i-lastobs
+        # print(tbtwn)
+        liks<-c(liks, dnorm(x=qlogis(obs[j, i]),mean=qlogis(predN[j, i]),sd=sqrt(tbtwn*s^2)))
+        lastobs<-i
+        # print(liks)
+      }
+    }
+  }
+  
+  
+  
+  # likes <- dbeta(x=obs2,shape1 = alpha, shape2 = beta)
+  # likes <- dnorm(x=qlogis(obs2), mean=plogis(predN2), sd = sd)
+  
+  nll<--1*sum(log(liks[-1]))  
+  return(nll)
+}
+
+#test
+nll.multi.func.p(lr1 = log(.4), lr2 = log(.4),lr3 = log(.4),
+                 lr4 = log(.4),lr5 = log(.4),lr6 = log(.4),
+                 lr7 = log(.4),lr8 = log(.4),lr9 = log(.4), lr10 = log(.4), 
+                 lr11 = log(.4), lr12 = log(.4), lr13 = log(.4), lr14 = log(.4), lr15 = log(.4), 
+                 lr16 = log(.4), lr17 = log(.4), lr18 = log(.4), lr19 = log(.4),
+                 lr20 = log(.4), lr21 = log(.4), lr22 = log(.4), lr23 = log(.4),
+                 lr24 = log(.4), lr25 = log(.4),lr26 = log(.4), lr27 = log(.4),
+                 lr28 = log(.4), lr29 = log(.4), lr30 = log(.4), lr31 = log(.4),
+                 lr32 = log(.4), lr33 = log(.4), lr34 = log(.4), lr35 = log(.4),lr36 = log(.4),
+                 lr37 = log(.4), lr38 = log(.4),lr39 = log(.4),
+                 lr40 = log(.4),lr41 = log(.4),lr42 = log(.4),
+                 lr43 = log(.4),lr44 = log(.4),lr45 = log(.4), lr46 = log(.4), 
+                 lr47 = log(.4), lr48 = log(.4), lr49 = log(.4), lr50 = log(.4), lr51 = log(.4), 
+                 lr52 = log(.4), lr53 = log(.4), lr54 = log(.4), lr55 = log(.4),
+                 lr56 = log(.4), lr57 = log(.4), lr58 = log(.4), lr59 = log(.4),
+                 lr60 = log(.4), lr61 = log(.4),lr62 = log(.4), lr63 = log(.4),
+                 lr64 = log(.4), lr65 = log(.4), lr66 = log(.4), lr67 = log(.4),
+                 lr68 = log(.4), lr69 = log(.4), lr70 = log(.4), lr71 = log(.4),lr72 = log(.4),
+                 ln0 = log(.01), obs = native.mat, lsd = log(.05), species.vec = species.vec)
+
+
+#####################
+#Find MLE parameters
+#####################
+
+library(bbmle)
+
+# Create list of starting guesses for the multi model
+start.list<-list(lr1=log(.1),
+                 lr2 = log(.2),
+                 lr3 = log(.1),
+                 lr4 = log(.1),
+                 lr5=log(.2),
+                 lr6 = log(.1),
+                 lr7 = log(.1),
+                 lr8 = log(.1),
+                 lr9 = log(.1),
+                 lr10 = log(.1),
+                 lr11 = log(.1),
+                 lr12 = log(.1),
+                 lr13 = log(.1),
+                 lr14 = log(.1),
+                 lr15 = log(.1),
+                 lr16 = log(.1),
+                 lr17 = log(.1),
+                 lr18 = log(.1),
+                 lr19 = log(.1),
+                 lr20 = log(.1),
+                 lr21 = log(.1),
+                 lr22 = log(.1),
+                 lr23 = log(.1),
+                 lr24 = log(.1),
+                 lr25 = log(.1),
+                 lr26 = log(.1),
+                 lr27 = log(.1),
+                 lr28 = log(.1),
+                 lr29 = log(.1),
+                 lr30 = log(.1),
+                 lr31 = log(.1),
+                 lr32 = log(.1),
+                 lr33 = log(.1),
+                 lr34 = log(.1),
+                 lr35 = log(.1),
+                 lr36 = log(.1),
+                 lr37=log(.1),
+                 lr38= log(.2),
+                 lr39 = log(.1),
+                 lr40= log(.1),
+                 lr41=log(.2),
+                 lr42= log(.1),
+                 lr43= log(.1),
+                 lr44= log(.1),
+                 lr45= log(.1),
+                 lr46 = log(.1),
+                 lr47 = log(.1),
+                 lr48 = log(.1),
+                 lr49 = log(.1),
+                 lr50 = log(.1),
+                 lr51 = log(.1),
+                 lr52 = log(.1),
+                 lr53 = log(.1),
+                 lr54 = log(.1),
+                 lr55 = log(.1),
+                 lr56 = log(.1),
+                 lr57 = log(.1),
+                 lr58 = log(.1),
+                 lr59 = log(.1),
+                 lr60 = log(.1),
+                 lr61 = log(.1),
+                 lr62 = log(.1),
+                 lr63 = log(.1),
+                 lr64 = log(.1),
+                 lr65 = log(.1),
+                 lr66 = log(.1),
+                 lr67 = log(.1),
+                 lr68 = log(.1),
+                 lr69 = log(.1),
+                 lr70 = log(.1),
+                 lr71 = log(.1),
+                 lr72 = log(.1),
+                 lsd = log(.05),
+                 ln0 = log(0.0001))
+# Create list of observed data for model
+data.list<-list(obs=native.mat, species.vec = species.vec, method = "SANN")
+
+# # Find MLE parameter estimates
+fit_mp<-mle2(minuslogl=nll.multi.func.p,start=start.list,data=data.list, method = "SANN")
+# # store MLE parameter estimates
+cfs_mp<-exp(coef(fit_mp)) 
+cfs_mp
+##############################################################
+# Predict historical dynamics from MLE parameter estimates
+##############################################################
+
+pred_mp<-multi.func.p(r1 = cfs_mp[1], r2 = cfs_mp[2], r3 = cfs_mp[3],
+                      r4 = cfs_mp[4], r5 = cfs_mp[5], r6 = cfs_mp[6],
+                      r7 = cfs_mp[7], r8 = cfs_mp[8], r9 = cfs_mp[9],
+                      r10 = cfs_mp[10], r11 = cfs_mp[11], r12 = cfs_mp[12],
+                      r13 = cfs_mp[13], r14 = cfs_mp[14], r15 = cfs_mp[15],
+                      r16 = cfs_mp[16], r17 = cfs_mp[17], r18 = cfs_mp[18],
+                      r19 = cfs_mp[19], r20 = cfs_mp[20], r21 = cfs_mp[21],
+                      r22 = cfs_mp[22], r23 = cfs_mp[23], r24 = cfs_mp[24],
+                      r25 = cfs_mp[25], r26 = cfs_mp[26], r27 = cfs_mp[27],
+                      r28 = cfs_mp[28], r29 = cfs_mp[29], r30 = cfs_mp[30],
+                      r31 = cfs_mp[31], r32 = cfs_mp[32], r33 = cfs_mp[33],
+                      r34 = cfs_mp[34], r35 = cfs_mp[35], r36 = cfs_mp[36],
+                      r37 = cfs_mp[37], r38 = cfs_mp[38], r39 = cfs_mp[39],
+                      r40 = cfs_mp[40], r41 = cfs_mp[41], r42 = cfs_mp[42],
+                      r43 = cfs_mp[43], r44 = cfs_mp[44], r45 = cfs_mp[45],
+                      r46 = cfs_mp[46], r47 = cfs_mp[47], r48 = cfs_mp[48],
+                      r49 = cfs_mp[49], r50 = cfs_mp[50], r51 = cfs_mp[51],
+                      r52 = cfs_mp[52], r53 = cfs_mp[53], r54 = cfs_mp[54],
+                      r55 = cfs_mp[55], r56 = cfs_mp[56], r57 = cfs_mp[57],
+                      r58 = cfs_mp[58], r59 = cfs_mp[59], r60 = cfs_mp[60],
+                      r61 = cfs_mp[61], r62 = cfs_mp[62], r63 = cfs_mp[63],
+                      r64 = cfs_mp[64], r65 = cfs_mp[65], r66 = cfs_mp[66],
+                      r67 = cfs_mp[67], r68 = cfs_mp[68], r69 = cfs_mp[69],
+                      r70 = cfs_mp[70], r71 = cfs_mp[71], r72 = cfs_mp[72],
+                      n0 = cfs_mp[73], obs = native.mat, species.vec = species.vec)
+plot(native.mat, pred_mp, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
+abline(0, 1) # Add 1:1 line on figure indicating perfect fit
+summary(lm(as.vector(native.mat) ~ as.vector(pred_mp)))
+mtext("R2 = 0.75", side=3)
