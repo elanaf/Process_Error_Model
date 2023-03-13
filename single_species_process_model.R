@@ -921,11 +921,11 @@ library(gtools)
 ####################################################
 #only select columns that I need for the analysis
 native.dat <- greenhouse %>%
-  filter(Species == "HENU") %>% 
+  filter(Species == "SOCA") %>% 
   select(Species, Block, Density, Phrag_Presence, Date_Cleaned, Cover.Native)  %>%
   arrange(Density, Phrag_Presence) #put likes together
 
-native.dat$ID_Col <- with(native.dat, paste0(Species, Block, Density, Phrag_Presence))
+native.dat$ID_Col <- with(native.dat, paste0(Species, Density, Phrag_Presence, Block))
 
 #make vectors to keep track of the treatment
 #1 = HW, 2 = HWO, 3 = LW, 4 = LWO
@@ -1442,9 +1442,6 @@ species.vec6 <- rep(59:72, each = 3)
 species.vec <- c(species.vec1, species.vec2, species.vec3, species.vec4,
                  species.vec5, species.vec6)
 
-
-
-
 #now make a matrix
 native.mat <- as.matrix(native.dat[,-1]) #make it a matrix, without the ID_Col
 native.mat[is.na(native.mat)] <- 0 #make all NAs 0
@@ -1463,6 +1460,11 @@ eighth <- matrix(native.mat[,4])
 
 native.mat <- cbind(first, second, third, fourth, fifth, sixth, seventh, eighth)
 
+#make a vector of two different possible ln0 values for the high producers and the low producers
+#low will be BOMA, JUAR, JUGE, JUTO, SCAC, SCAM, SCPU
+ln0.vec <- c(rep(1, 12), rep(2, 12), rep(1, 60), rep(2, 36), rep(1, 36),
+             rep(2, 36), rep(1, 24))
+
 ###############################################################
 #State Prediction Funcions: 
 #Model with single and multi r and process vs observation error
@@ -1478,7 +1480,7 @@ multi.func.p<-function(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11,
                        r48, r49, r50, r51, r52, r53, r54,
                        r55, r56, r57, r58, r59, r60, r61, 
                        r62, r63, r64, r65, r66, r67, r68, r69, r70, r71, r72,
-                       obs,n0, species.vec){
+                       obs,n01, n02, species.vec, ln0.vec){
   rvec <- c(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, 
             r11, r12, r13, r14, r15, r16, r17, r18, 
             r19, r20, r21, r22, r23, r24, r25, r26, r27, r28,
@@ -1488,13 +1490,15 @@ multi.func.p<-function(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11,
             r55, r56, r57, r58, r59, r60, r61, 
             r62, r63, r64, r65, r66, r67, r68, r69, r70, r71, r72)
   
+  n0 <- c(n01, n02)
+  
   dims <- dim(obs)
   ntubs <- dims[1]
   ts <- dims[2]
   
   Nout <- matrix(0, nrow = ntubs, ncol = ts)
   for(i in 1:ntubs){
-    Nout[i,1]<-n0*(1+rvec[species.vec[i]]*(1-n0/.995))
+    Nout[i,1]<-n0[ln0.vec[i]]*(1+rvec[species.vec[i]]*(1-n0[ln0.vec[i]]/.995))
   }
   
   for(i in 2:ts){
@@ -1511,21 +1515,20 @@ multi.func.p<-function(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11,
 }
 
 #test
-multi.func.p(r1 = .7, r2 = .9, r3 = .9, r4 = .7, r5 = .9, r6 = .2, r7 = .7, r8 = .6,
-             r9 = .9, r10 = .1, r11 = .1, 
-             r12 = .1, r13 = .1, r14 = .1, r15 = .1, r16 = .1, r17 = .1, r18 = .1, 
-             r19 =.1, r20=.1, r21=.1, 
-             r22=.1, r23=.1, r24=.1, r25=.1,
-             r26=.1, r27=.1, r28=.1, r29=.1,
-             r30=.1, r31=.1, r32=.1, r33=.1, r34=.1, r35=.1, r36=.1, 
-             r37=.1, r38=.1, r39=.1, r40=.1, r41=.1, r42=.1, r43=.1, r44=.1, 
-             r45=.1, r46=.1, r47=.1, 
-             r48=.1, r49=.1, r50=.1, r51=.1, r52=.1, r53=.1, r54=.1,
-             r55=.1, r56=.1, r57=.1, r58=.1, r59=.1, r60=.1, r61=.1, 
-             r62=.1, r63=.1, r64=.1, r65=.1, r66=.1, r67=.1, r68=.1, 
-             r69=.1, r70=.1, r71=.1, r72=.1,
+multi.func.p(r1 = .7, r2 = .9, r3 = .9, r4 = .7, r5 = .9, 
+             r6 = .2, r7 = .7, r8 = .6,r9 = .9, r10 = .1, 
+             r11 = .1, r12 = .1, r13 = .1, r14 = .1, 
+             r15 = .1, r16 = .1, r17 = .1, r18 = .1, r19 =.1, 
+             r20=.1, r21=.1, r22=.1, r23=.1, r24=.1, r25=.1,
+             r26=.1, r27=.1, r28=.1, r29=.1,r30=.1, r31=.1, 
+             r32=.1, r33=.1, r34=.1, r35=.1, r36=.1, r37=.1, 
+             r38=.1, r39=.1, r40=.1, r41=.1, r42=.1, r43=.1, r44=.1, 
+             r45=.1, r46=.1, r47=.1, r48=.1, r49=.1, r50=.1, r51=.1, 
+             r52=.1, r53=.1, r54=.1,r55=.1, r56=.1, r57=.1, r58=.1, 
+             r59=.1, r60=.1, r61=.1, r62=.1, r63=.1, r64=.1, r65=.1, 
+             r66=.1, r67=.1, r68=.1, r69=.1, r70=.1, r71=.1, r72=.1,
              species.vec = species.vec,
-             obs = native.mat, n0 = .1)
+             obs = native.mat, n01 = .1, n02 = 0.01, ln0.vec = ln0.vec)
 
 ############################
 #NLL Function
@@ -1545,8 +1548,8 @@ nll.multi.func.p<-function(lr1, lr2, lr3, lr4, lr5, lr6, lr7, lr8, lr9,
                            lr46, lr47, lr48, lr49, lr50, lr51, lr52, lr53, lr54,
                            lr55, lr56, lr57, lr58, lr59, lr60, lr61, lr62, lr63,
                            lr64, lr65, lr66, lr67, lr68, lr69, lr70, lr71, lr72,
-                           species.vec,
-                           obs,ln0, lsd){
+                           species.vec, ln0.vec, 
+                           obs,ln01, ln02, lsd){
   r1<-exp(lr1)
   r2<-exp(lr2)
   r3<-exp(lr3)
@@ -1621,7 +1624,8 @@ nll.multi.func.p<-function(lr1, lr2, lr3, lr4, lr5, lr6, lr7, lr8, lr9,
   r72 <- exp(lr72)
   
   s <-exp(lsd)
-  n0 <- exp(ln0)
+  n01 <- exp(ln01)
+  n02 <- exp(ln02)
   
   predN<-multi.func.p(r1=r1,r2=r2,r3=r3,r4=r4,r5=r5,r6=r6, r7=r7,r8=r8, 
                       r9=r9, r10=r10,r11=r11, r12=r12, r13=r13, r14=r14, 
@@ -1634,7 +1638,7 @@ nll.multi.func.p<-function(lr1, lr2, lr3, lr4, lr5, lr6, lr7, lr8, lr9,
                       r48, r49, r50, r51, r52, r53, r54,
                       r55, r56, r57, r58, r59, r60, r61, 
                       r62, r63, r64, r65, r66, r67, r68, r69, r70, r71, r72,
-                      obs=obs,species.vec = species.vec, n0 = n0)
+                      obs=obs,species.vec = species.vec, n01 = n01, n02 = n02, ln0.vec = ln0.vec)
   
   # obs2 <- obs[!is.na(obs)]
   # predN2 <- predN[!is.na(obs)]
@@ -1692,7 +1696,8 @@ nll.multi.func.p(lr1 = log(.4), lr2 = log(.4),lr3 = log(.4),
                  lr60 = log(.4), lr61 = log(.4),lr62 = log(.4), lr63 = log(.4),
                  lr64 = log(.4), lr65 = log(.4), lr66 = log(.4), lr67 = log(.4),
                  lr68 = log(.4), lr69 = log(.4), lr70 = log(.4), lr71 = log(.4),lr72 = log(.4),
-                 ln0 = log(.01), obs = native.mat, lsd = log(.05), species.vec = species.vec)
+                 ln01 = log(.01), ln02 = log(0.001), ln0.vec = ln0.vec,
+                 obs = native.mat, lsd = log(.05), species.vec = species.vec)
 
 
 #####################
@@ -1775,9 +1780,10 @@ start.list<-list(lr1=log(.1),
                  lr71 = log(.1),
                  lr72 = log(.1),
                  lsd = log(.05),
-                 ln0 = log(0.0001))
+                 ln01 = log(0.0001),
+                 ln02 = log(0.0001))
 # Create list of observed data for model
-data.list<-list(obs=native.mat, species.vec = species.vec, method = "SANN")
+data.list<-list(obs=native.mat, species.vec = species.vec, ln0.vec = ln0.vec, method = "SANN")
 
 # # Find MLE parameter estimates
 fit_mp<-mle2(minuslogl=nll.multi.func.p,start=start.list,data=data.list, method = "SANN")
@@ -1812,8 +1818,9 @@ pred_mp<-multi.func.p(r1 = cfs_mp[1], r2 = cfs_mp[2], r3 = cfs_mp[3],
                       r64 = cfs_mp[64], r65 = cfs_mp[65], r66 = cfs_mp[66],
                       r67 = cfs_mp[67], r68 = cfs_mp[68], r69 = cfs_mp[69],
                       r70 = cfs_mp[70], r71 = cfs_mp[71], r72 = cfs_mp[72],
-                      n0 = cfs_mp[73], obs = native.mat, species.vec = species.vec)
+                      n01 = cfs_mp[73], n02 = cfs_mp[74], 
+                      obs = native.mat, species.vec = species.vec, ln0.vec = ln0.vec)
 plot(native.mat, pred_mp, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
 abline(0, 1) # Add 1:1 line on figure indicating perfect fit
 summary(lm(as.vector(native.mat) ~ as.vector(pred_mp)))
-mtext("R2 = 0.75", side=3)
+#mtext("R2 = 0.75", side=3)
