@@ -2142,3 +2142,5 @@ library(gridExtra)
 jpeg("r_value_data.jpeg", height = 1500, width = 400)
 grid.table(data_read)
 dev.off()
+
+save(data_read, file = "r_values_table.RData")
