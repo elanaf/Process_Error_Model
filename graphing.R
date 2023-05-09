@@ -4,6 +4,7 @@ View(data_read)
 
 library(tidyverse)
 library(emmeans)
+library(patchwork)
 
 r_table <- data_read
 
@@ -50,15 +51,15 @@ summary(lm_biomass)
 cor(final.all$Phrag.Biomass, final.all$value, method = "pearson", use = "complete.obs")
 #negative correlation of -0.586
 
-final.all %>% 
+a <- final.all %>% 
   ggplot(aes(x = value, y = Phrag.Biomass, color = Density)) +
   geom_point(size = 2) +
   labs(x = "Growth Rate (r)", y = "*Phragmites* Biomass") +
-  theme(axis.title.y = ggtext::element_markdown()) +
+  theme(axis.title.y = ggtext::element_markdown(),
+        legend.position = "none") +
   geom_smooth(method="lm", se=FALSE, fullrange = TRUE) +
   ylim(0, 50)
 
-ggsave("r_biomass.jpeg")
 
 # Relationship between r values and phrag cover ####
 
@@ -73,11 +74,12 @@ summary(lm_cover)
 cor(final.all$Cover.Phrag, final.all$value, method = "pearson", use = "complete.obs")
 #negative correlation of -0.597
 
-final.all %>% 
+b <- final.all %>% 
   ggplot(aes(x = value, y = Cover.Phrag, color = Density)) +
   geom_point(size = 2) +
   labs(x = "Growth Rate (r)", y = "*Phragmites* Cover") +
   theme(axis.title.y = ggtext::element_markdown())+
   geom_smooth(method="lm", se=FALSE, fullrange = TRUE) 
 
-ggsave("r_cover.jpeg")
+a + b
+ggsave("growth-rate_biomass_cover.jpeg")
