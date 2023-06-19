@@ -183,7 +183,7 @@ cfs_mp
 
 #only select columns that I need for the analysis
 native.dat <- greenhouse %>%
-  filter(Species == "SCAC") %>% 
+  filter(Species == "SOCA") %>% 
   select(Species, Block, Density, Phrag_Presence, Date_Cleaned, Cover.Native)  %>%
   arrange(Density, Phrag_Presence) #put likes together
 
@@ -336,20 +336,18 @@ cfs_np<-exp(coef(fit_np))
 cfs_np
 
 ## Predict historical dynamics from MLE parameter estimates####
-
-
-# pred_np<-multi.func.p(r1 = cfs_np[1], r2 = cfs_np[2],
-#                       n0 = cfs_np[3], obs = native.mat, species.vec = species.vec)
-# plot(native.mat, pred_np, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
-# abline(0, 1) # Add 1:1 line on figure indicating perfect fit
-# summary(lm(as.vector(native.mat) ~ as.vector(pred_np)))
+pred_np<-multi.func.p(r1 = cfs_np[1], r2 = cfs_np[2],
+                      n0 = cfs_np[3], obs = native.mat, species.vec = species.vec)
+plot(native.mat, pred_np, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
+abline(0, 1) # Add 1:1 line on figure indicating perfect fit
+summary(lm(as.vector(native.mat) ~ as.vector(pred_np)))
 
 # Model with only phrag ####
 ## Make a new dataframe that is in a better format####
 
 #only select columns that I need for the analysis
 native.dat <- greenhouse %>%
-  filter(Species == "SCAC") %>% 
+  filter(Species == "SYCI") %>% 
   select(Species, Block, Phrag_Presence, Density, Date_Cleaned, Cover.Native)  %>%
   arrange(Phrag_Presence, Density) #put likes together
 
@@ -501,20 +499,18 @@ cfs_nd<-exp(coef(fit_nd))
 cfs_nd
 
 ## Predict historical dynamics from MLE parameter estimates####
-
-
-# pred_nd<-multi.func.p(r1 = cfs_nd[1], r2 = cfs_nd[2],
-#                       n0 = cfs_nd[3], obs = native.mat, species.vec = species.vec)
-# plot(native.mat, pred_nd, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
-# abline(0, 1) # Add 1:1 line on figure indicating perfect fit
-# summary(lm(as.vector(native.mat) ~ as.vector(pred_nd)))
+pred_nd<-multi.func.p(r1 = cfs_nd[1], r2 = cfs_nd[2],
+                      n0 = cfs_nd[3], obs = native.mat, species.vec = species.vec)
+plot(native.mat, pred_nd, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
+abline(0, 1) # Add 1:1 line on figure indicating perfect fit
+summary(lm(as.vector(native.mat) ~ as.vector(pred_nd)))
 
 # Model with nothing ####
 ## Make a new dataframe that is in a better format####
 
 #only select columns that I need for the analysis
 native.dat <- greenhouse %>%
-  filter(Species == "SCAC") %>% 
+  filter(Species == "SCPU") %>% 
   select(Species, Block, Phrag_Presence, Density, Date_Cleaned, Cover.Native)  %>%
   arrange(Phrag_Presence, Density) #put likes together
 
@@ -660,11 +656,11 @@ cfs_n
 
 ## Predict historical dynamics from MLE parameter estimates####
 
-# pred_n<-multi.func.p(r = cfs_n[1],
-#                       n0 = cfs_n[2], obs = native.mat)
-# plot(native.mat, pred_n, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
-# abline(0, 1) # Add 1:1 line on figure indicating perfect fit
-# summary(lm(as.vector(native.mat) ~ as.vector(pred_n)))
+pred_n<-multi.func.p(r = cfs_n[1],
+                      n0 = cfs_n[2], obs = native.mat)
+plot(native.mat, pred_n, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
+abline(0, 1) # Add 1:1 line on figure indicating perfect fit
+summary(lm(as.vector(native.mat) ~ as.vector(pred_n)))
 
 # AIC calculations ####
 # Calculate AIC for each model
@@ -1065,11 +1061,12 @@ cfs_np
 ## Predict historical dynamics from MLE parameter estimates####
 
 
-# pred_np<-multi.func.p(r1 = cfs_np[1], r2 = cfs_np[2],
-#                       n0 = cfs_np[3], obs = native.mat, species.vec = species.vec)
-# plot(native.mat, pred_np, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
-# abline(0, 1) # Add 1:1 line on figure indicating perfect fit
-# summary(lm(as.vector(native.mat) ~ as.vector(pred_np)))
+pred_np<-multi.func.p(r1 = cfs_np[1], r2 = cfs_np[2],
+                      n0 = cfs_np[3], obs = native.mat, species.vec = species.vec)
+plot(native.mat, pred_np, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
+abline(0, 1) # Add 1:1 line on figure indicating perfect fit
+summary(lm(as.vector(native.mat) ~ as.vector(pred_np)))
+#R2 = .70
 
 # Model with only phrag ####
 ## Make a new dataframe that is in a better format####
@@ -2140,11 +2137,12 @@ cfs_n
 
 ## Predict historical dynamics from MLE parameter estimates####
 
-# pred_n<-multi.func.p(r = cfs_n[1],
-#                       n0 = cfs_n[2], obs = native.mat)
-# plot(native.mat, pred_n, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
-# abline(0, 1) # Add 1:1 line on figure indicating perfect fit
-# summary(lm(as.vector(native.mat) ~ as.vector(pred_n)))
+pred_n<-multi.func.p(r = cfs_n[1],
+                     n0 = cfs_n[2], obs = native.mat)
+plot(native.mat, pred_n, xlab = "Observed", ylab = "Predicted",pch = 16, las = 1, ylim = c(0,1))
+abline(0, 1) # Add 1:1 line on figure indicating perfect fit
+summary(lm(as.vector(native.mat) ~ as.vector(pred_n)))
+#R2 = .25
 
 # AIC calculations ####
 # Calculate AIC for each model
