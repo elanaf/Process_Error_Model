@@ -66,3 +66,4 @@ dat2 %>%
   ylab("*Phragmites* Cover") +
   labs(color = "Quantiles") +
   theme(axis.title.y = ggtext::element_markdown())
+ggsave("quant_reg_ggplot.jpeg")
