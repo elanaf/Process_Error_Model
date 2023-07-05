@@ -1,7 +1,5 @@
 #try with an individual species####
 
-##Graph the species to determine that they are following logistic growth####
-
 load("main_dfs.RData")
 
 library(ggplot2)
