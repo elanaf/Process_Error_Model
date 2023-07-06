@@ -12,7 +12,7 @@ library(gtools)
 
 #only select columns that I need for the analysis
 native.dat <- greenhouse %>%
-  filter(Species == "SCAC") %>% 
+  filter(Species == "SCPU") %>% 
   select(Species, Block, Density, Phrag_Presence, Date_Cleaned, Cover.Native)  %>%
   arrange(Density, Phrag_Presence) #put likes together
 
@@ -181,7 +181,7 @@ cfs_mp
 
 #only select columns that I need for the analysis
 native.dat <- greenhouse %>%
-  filter(Species == "SOCA") %>% 
+  filter(Species == "SCPU") %>% 
   select(Species, Block, Density, Phrag_Presence, Date_Cleaned, Cover.Native)  %>%
   arrange(Density, Phrag_Presence) #put likes together
 
@@ -345,7 +345,7 @@ summary(lm(as.vector(native.mat) ~ as.vector(pred_np)))
 
 #only select columns that I need for the analysis
 native.dat <- greenhouse %>%
-  filter(Species == "SYCI") %>% 
+  filter(Species == "SCPU") %>% 
   select(Species, Block, Phrag_Presence, Density, Date_Cleaned, Cover.Native)  %>%
   arrange(Phrag_Presence, Density) #put likes together
 
