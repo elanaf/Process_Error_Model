@@ -41,7 +41,7 @@ final %>%
   facet_wrap(~Species, ncol = 6) +
   geom_errorbar(aes(ymin = lwr_value, ymax = upr_value)) +
   xlab("Treatment") +
-  ylab("Growth rate (r)") +
+  ylab("Intrinsic rate of growth (r)") +
   theme(axis.text.x = element_text(angle = 45, hjust = 0.9))
 
 ggsave("r_values_graph.jpeg")

@@ -10,6 +10,7 @@ load("main_dfs.RData")
 
 #Let's clean up the r values sheet we need to use
 dat <- values %>% 
+  select(1:4, 7, 10, 13, 16, 17) %>% 
   pivot_longer(4:7,
                names_to = "Tub",
                values_to = "r_value") %>% 
@@ -56,14 +57,17 @@ plot(summary(rqfit), parm = "r_value",
 dev.off()
 
 #ggplot graph 
+color <- c("#FCFDBFFF" , "#FB8861FF", "#B63679FF", "#51127CFF","#000004FF" )
 dat2 %>% 
   ggplot(aes(x = r_value, y = Cover.Phrag))+
   geom_point() +
   geom_quantile(quantiles = c(0.05, 0.25, 0.5, 0.75, 0.95),
                 aes(color = factor(..quantile..)),
-                size = 1.5) +
-  xlab("Growth Rate (Proportional Cover Per Day)") +
+                size = 1) +
+  xlab("Intrinsic Rate of Growth (r)") +
   ylab("*Phragmites* Cover") +
   labs(color = "Quantiles") +
-  theme(axis.title.y = ggtext::element_markdown())
+  theme(axis.title.y = ggtext::element_markdown()) +
+  scale_color_manual(values = color) +
+  ylim(0, 0.5)
 ggsave("quant_reg_ggplot.jpeg")
