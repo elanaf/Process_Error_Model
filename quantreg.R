@@ -57,7 +57,7 @@ plot(summary(rqfit), parm = "r_value",
 dev.off()
 
 #ggplot graph 
-color <- c("#FCFDBFFF" , "#FB8861FF", "#B63679FF", "#51127CFF","#000004FF" )
+color <- c("#74b3ce", "#73c2fb" , "#1e90ff", "#192bc2","#00004d" )
 dat2 %>% 
   ggplot(aes(x = r_value, y = Cover.Phrag))+
   geom_point() +
@@ -65,7 +65,7 @@ dat2 %>%
                 aes(color = factor(..quantile..)),
                 size = 1) +
   xlab("Intrinsic Rate of Growth (r)") +
-  ylab("*Phragmites* Cover") +
+  ylab("Proportional *Phragmites* Cover") +
   labs(color = "Quantiles") +
   theme(axis.title.y = ggtext::element_markdown()) +
   scale_color_manual(values = color) +

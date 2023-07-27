@@ -3,8 +3,8 @@
 library(tidyverse)
 
 values <- read.csv("r_values.csv")
-View(values)
-glimpse(values)
+#View(values)
+#glimpse(values)
 
 graph_values <- values %>% 
   select(-c(Model, R2, n0, sd))
@@ -41,7 +41,7 @@ final %>%
   facet_wrap(~Species, ncol = 6) +
   geom_errorbar(aes(ymin = lwr_value, ymax = upr_value)) +
   xlab("Treatment") +
-  ylab("Intrinsic rate of growth (r)") +
+  ylab("Intrinsic Rate of Growth (r)") +
   theme(axis.text.x = element_text(angle = 45, hjust = 0.9))
 
 ggsave("r_values_graph.jpeg")
