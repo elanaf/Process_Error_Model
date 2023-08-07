@@ -65,7 +65,7 @@ dat2 %>%
                 aes(color = factor(..quantile..)),
                 size = 1) +
   xlab("Intrinsic Rate of Growth (r)") +
-  ylab("Proportional *Phragmites* Cover") +
+  ylab("Proportional *P.australis* Cover") +
   labs(color = "Quantiles") +
   theme(axis.title.y = ggtext::element_markdown()) +
   scale_color_manual(values = color) +
