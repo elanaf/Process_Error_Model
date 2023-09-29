@@ -35,7 +35,7 @@ summary(rqfit)
 #base r graph
 color <- c("#ffcccc", "#ff9999", "#ff6666", "#ff3333", "#ff0000")
 library(gridExtra)
-jpeg("quantile_regression.jpeg", height = 400, width = 400)
+#jpeg("quantile_regression.jpeg", height = 400, width = 400)
 plot(Cover.Phrag ~ r_value, data = dat2,
      xlab = "Growth rate (r)",
      ylab = substitute(paste("Proportional ", italic("Phragmites "), "cover"))
@@ -45,23 +45,23 @@ for (j in 1:ncol(rqfit$coefficients)) {
 }
 legend(x = "topright", legend = c(0.05, 0.25, 0.5, 0.75, 0.95), 
        col = color, lty = 1, title = "Quantiles")
-dev.off()
+#dev.off()
 
 #built in function to show the change in quantile coefficients and the confidence intervals
 #red lines is the least squares estimate and confidence intervals
 #black dots are slope coefficient at the given quantile
-jpeg("qreg_ci.jpeg", height = 400, width = 500)
+#jpeg("qreg_ci.jpeg", height = 400, width = 500)
 plot(summary(rqfit), parm = "r_value",
      xlab = "Quantile", 
      ylab = "Slope Coefficient")
-dev.off()
+#dev.off()
 
 #ggplot graph 
-color <- c("#74b3ce", "#73c2fb" , "#1e90ff", "#192bc2","#00004d" )
+color <- c("#1e90ff", "#192bc2")
 dat2 %>% 
   ggplot(aes(x = r_value, y = Cover.Phrag))+
   geom_point() +
-  geom_quantile(quantiles = c(0.05, 0.25, 0.5, 0.75, 0.95),
+  geom_quantile(quantiles = c(0.5, 0.95),
                 aes(color = factor(..quantile..)),
                 size = 1) +
   xlab("Intrinsic Rate of Growth (r)") +
